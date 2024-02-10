@@ -1,3 +1,9 @@
 
 # MAC
 .DS_Store
+
+# .vscode
+**/.vscode/**
+
+# build
+**/build/**
