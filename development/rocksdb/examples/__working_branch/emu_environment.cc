@@ -47,7 +47,8 @@ EmuEnv::EmuEnv()
 // Options hardcoded in code
   // Memory allocation options
     max_write_buffer_number = 2;
-    memtable_factory = 3; // 1 for skiplist, 2 for vector, 3 for hash skiplist, 4 for hash linklist
+    //memtable_factory = 3; // 1 for skiplist, 2 for vector, 3 for hash skiplist, 4 for hash linklist
+    memtable_factory = 1; // 1 for skiplist, 2 for vector, 3 for hash skiplist, 4 for hash linklist
     target_file_size_base = buffer_size;
     level_compaction_dynamic_level_bytes = false;
     compaction_style = 1; // 1 for kCompactionStyleLevel, 2 for kCompactionStyleUniversal, 3 for kCompactionStyleFIFO, 4 for kCompactionStyleNone 
