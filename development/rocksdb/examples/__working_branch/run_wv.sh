@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#variable = m (memtable_factory)
 # Run the file with different values for -m and save output to separate files
 for value in 1 2 3 4; do
   output_file="out${value}.txt"

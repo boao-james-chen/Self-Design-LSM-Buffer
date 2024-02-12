@@ -579,12 +579,12 @@ int runWorkload(EmuEnv* _env) {
   std::chrono::time_point<std::chrono::high_resolution_clock> update_start, update_end;
   std::chrono::time_point<std::chrono::high_resolution_clock> range_query_start, range_query_end;
   std::chrono::time_point<std::chrono::high_resolution_clock> range_delete_start, range_delete_end;
-  std::chrono::duration<double> total_insert_time_elapsed;
-  std::chrono::duration<double> total_query_time_elapsed;
-  std::chrono::duration<double> total_delete_time_elapsed;
-  std::chrono::duration<double> total_update_time_elapsed;
-  std::chrono::duration<double> total_range_query_time_elapsed;
-  std::chrono::duration<double> total_range_delete_time_elapsed;
+  std::chrono::duration<double> total_insert_time_elapsed = std::chrono::duration<double>::zero();
+  std::chrono::duration<double> total_query_time_elapsed = std::chrono::duration<double>::zero();
+  std::chrono::duration<double> total_delete_time_elapsed = std::chrono::duration<double>::zero();
+  std::chrono::duration<double> total_update_time_elapsed = std::chrono::duration<double>::zero();
+  std::chrono::duration<double> total_range_query_time_elapsed = std::chrono::duration<double>::zero();
+  std::chrono::duration<double> total_range_delete_time_elapsed = std::chrono::duration<double>::zero();
   start = std::chrono::high_resolution_clock::now();
 
 
@@ -672,7 +672,7 @@ int runWorkload(EmuEnv* _env) {
 
       // end measuring the time taken by the range delete
       range_delete_end = std::chrono::high_resolution_clock::now();
-      total_delete_time_elapsed += range_delete_end - range_delete_start;
+      total_range_delete_time_elapsed += range_delete_end - range_delete_start;
 
       op_track._range_deletes_completed++;
       counter++;
