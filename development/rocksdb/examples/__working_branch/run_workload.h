@@ -272,7 +272,7 @@ int runWorkload(EmuEnv* _env) {
 
         // end measuring the time taken by the range delete
         range_delete_end = std::chrono::high_resolution_clock::now();
-        total_delete_time_elapsed += range_delete_end - range_delete_start;
+        total_range_delete_time_elapsed += range_delete_end - range_delete_start;
 
         op_track._range_deletes_completed++;
         counter++;
