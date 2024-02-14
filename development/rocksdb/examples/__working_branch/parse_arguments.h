@@ -95,7 +95,7 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
   args::ValueFlag<int> memtable_factory_cmd(
       group1, "memtable_factory",
       "[Memtable Factory: 1 for Skiplist, 2 for Vector, 3 for Hash Skiplist, 4 "
-      "for Hash Linkedlist; def: 3]",
+      "for Hash Linkedlist; def: 1]",
       {'m', "memtable_factory"});
 
   try {
