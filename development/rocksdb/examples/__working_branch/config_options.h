@@ -2,6 +2,7 @@
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/statistics.h>
 #include <rocksdb/table.h>
+#include <rocksdb/slice_transform.h>
 
 #include "emu_environment.h"
 
@@ -9,7 +10,10 @@ using namespace rocksdb;
 
 void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
                    WriteOptions *w_op, ReadOptions *r_op, FlushOptions *f_op) {
-  // *op = Options();
+  
+  // For HashLinkList / HashSkipList
+  auto prefix_len = 5;
+
   // !YBS-sep01-XX!
   op->statistics = CreateDBStatistics();
   // !YBS-sep07-XX!
@@ -28,9 +32,13 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
       break;
     case 3:
       op->memtable_factory.reset(NewHashSkipListRepFactory());
+      // defines a fixed length prefix_extractor for testing HashLinkList & HashSkipList
+      op->prefix_extractor.reset(NewFixedPrefixTransform(prefix_len));
       break;
     case 4:
       op->memtable_factory.reset(NewHashLinkListRepFactory());
+      // defines a fixed length prefix_extractor for testing HashLinkList & HashSkipList
+      op->prefix_extractor.reset(NewFixedPrefixTransform(prefix_len));
       break;
     default:
       std::cerr << "error: memtable_factory" << std::endl;
