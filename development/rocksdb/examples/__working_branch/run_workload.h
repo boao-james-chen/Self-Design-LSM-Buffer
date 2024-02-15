@@ -32,6 +32,13 @@ void printWorkloadStatistics(operation_tracker op_track);
 inline void showProgress(const uint32_t& workload_size,
                          const uint32_t& counter);
 
+/*
+ * The compactions can run in background even after the workload is completely
+ * executed so, we have to wait for them to complete. Compaction Listener gets
+ * notified by the rocksdb API for every compaction that just finishes off.
+ * After every compaction we check, if more compactions are required with
+ * `WaitForCompaction` function, if not then it signals to close the db
+ */
 class CompactionsListner : public rocksdb::EventListener {
  public:
   explicit CompactionsListner() {}
@@ -44,6 +51,10 @@ class CompactionsListner : public rocksdb::EventListener {
   }
 };
 
+/*
+ * Wait for compactions that are running (or will run) to make the 
+ * LSM tree in its shape. Check `CompactionListner` for more details.
+ */
 void WaitForCompactions(rocksdb::DB* db) {
   std::unique_lock<std::mutex> lock(mtx);
   uint64_t num_running_compactions;
@@ -150,17 +161,6 @@ int runWorkload(EmuEnv* _env) {
   Iterator* it = db->NewIterator(r_options);  // for range reads
   uint32_t counter = 0;                       // for progress bar
 
-#ifdef TIMER
-  unsigned long long cum_time_all_operations = 0;
-  unsigned long long cum_time_workload = 0;
-  unsigned long long cum_time_inserts = 0;
-  unsigned long long cum_time_updates = 0;
-  unsigned long long cum_time_pointq = 0;
-  unsigned long long cum_time_range_queries = 0;
-  auto workload_start = std::chrono::high_resolution_clock::now();
-  std::vector<unsigned long long> each_range_query_time;
-#endif  // TIMER
-
   for (int i = 0; i < 20; ++i) {
     _env->level_delete_persistence_latency[i] = -1;
     _env->RR_level_last_file_selected[i] = -1;  // !YBS-sep06-XX!
@@ -182,6 +182,28 @@ int runWorkload(EmuEnv* _env) {
   }
   // !END
 
+  // time variables for measuring the time taken by the workload
+  std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
+  std::chrono::time_point<std::chrono::high_resolution_clock> insert_start,
+      insert_end;
+  std::chrono::time_point<std::chrono::high_resolution_clock> query_start,
+      query_end;
+  std::chrono::time_point<std::chrono::high_resolution_clock> delete_start,
+      delete_end;
+  std::chrono::time_point<std::chrono::high_resolution_clock> update_start,
+      update_end;
+  std::chrono::time_point<std::chrono::high_resolution_clock> range_query_start,
+      range_query_end;
+  std::chrono::time_point<std::chrono::high_resolution_clock>
+      range_delete_start, range_delete_end;
+  std::chrono::duration<double> total_insert_time_elapsed(0);
+  std::chrono::duration<double> total_query_time_elapsed(0);
+  std::chrono::duration<double> total_delete_time_elapsed(0);
+  std::chrono::duration<double> total_update_time_elapsed(0);
+  std::chrono::duration<double> total_range_query_time_elapsed(0);
+  std::chrono::duration<double> total_range_delete_time_elapsed(0);
+  start = std::chrono::high_resolution_clock::now();
+
   while (!workload_file.eof()) {
     char instruction;
     long key, start_key, end_key;
@@ -192,22 +214,18 @@ int runWorkload(EmuEnv* _env) {
       case 'I':  // insert
         workload_file >> key >> value;
         // if (_env->verbosity == 2) std::cout << instruction << " " << key << "
-        // " << value << "" << std::endl; Put key-value
-        {
-#ifdef TIMER
-          auto start = std::chrono::high_resolution_clock::now();
-#endif  // TIMER
-          s = db->Put(w_options, to_string(key), value);
-#ifdef TIMER
-          auto stop = std::chrono::high_resolution_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-              stop - start);
-          cum_time_all_operations += duration.count();
-          cum_time_inserts += duration.count();
-#endif  // TIMER
-        }
+        // " << value << "" << std::endl;
+
+        // start measuring the time taken by the insert
+        insert_start = std::chrono::high_resolution_clock::now();
+
+        // Put key-value
+        s = db->Put(w_options, std::to_string(key), value);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
         assert(s.ok());
+        // end measuring the time taken by the insert
+        insert_end = std::chrono::high_resolution_clock::now();
+        total_insert_time_elapsed += insert_end - insert_start;
         op_track._inserts_completed++;
         counter++;
         fade_stats->inserts_completed++;
@@ -216,22 +234,18 @@ int runWorkload(EmuEnv* _env) {
       case 'U':  // update
         workload_file >> key >> value;
         // if (_env->verbosity == 2) std::cout << instruction << " " << key << "
-        // " << value << "" << std::endl; Put key-value
-        {
-#ifdef TIMER
-          auto start = std::chrono::high_resolution_clock::now();
-#endif  // TIMER
-          s = db->Put(w_options, to_string(key), value);
-#ifdef TIMER
-          auto stop = std::chrono::high_resolution_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-              stop - start);
-          cum_time_all_operations += duration.count();
-          cum_time_updates += duration.count();
-#endif  // TIMER
-        }
+        // " << value << "" << std::endl;
+
+        // start measuring the time taken by the update
+        update_start = std::chrono::high_resolution_clock::now();
+
+        // Put key-value
+        s = db->Put(w_options, std::to_string(key), value);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
         assert(s.ok());
+        // end measuring the time taken by the update
+        update_end = std::chrono::high_resolution_clock::now();
+        total_update_time_elapsed += update_end - update_start;
         op_track._updates_completed++;
         counter++;
         fade_stats->updates_completed++;
@@ -241,8 +255,15 @@ int runWorkload(EmuEnv* _env) {
         workload_file >> key;
         // if (_env->verbosity == 2) std::cout << instruction << " " << key <<
         // "" << std::endl;
-        s = db->Delete(w_options, to_string(key));
+
+        // start measuring the time taken by the delete
+        delete_start = std::chrono::high_resolution_clock::now();
+        s = db->Delete(w_options, std::to_string(key));
         assert(s.ok());
+        // end measuring the time taken by the delete
+        delete_end = std::chrono::high_resolution_clock::now();
+        total_delete_time_elapsed += delete_end - delete_start;
+
         op_track._point_deletes_completed++;
         counter++;
         fade_stats->point_deletes_completed++;
@@ -252,9 +273,19 @@ int runWorkload(EmuEnv* _env) {
         workload_file >> start_key >> end_key;
         // if (_env->verbosity == 2) std::cout << instruction << " " <<
         // start_key << " " << end_key << "" << std::endl;
+
+        // start measuring the time taken by the range delete
+        range_delete_start = std::chrono::high_resolution_clock::now();
+
         s = db->DeleteRange(w_options, std::to_string(start_key),
                             std::to_string(end_key));
         assert(s.ok());
+
+        // end measuring the time taken by the range delete
+        range_delete_end = std::chrono::high_resolution_clock::now();
+        total_range_delete_time_elapsed +=
+            range_delete_end - range_delete_start;
+
         op_track._range_deletes_completed++;
         counter++;
         fade_stats->range_deletes_completed++;
@@ -264,24 +295,19 @@ int runWorkload(EmuEnv* _env) {
         workload_file >> key;
         // if (_env->verbosity == 2) std::cout << instruction << " " << key <<
         // "" << std::endl;
-        {
-#ifdef TIMER
-          auto start = std::chrono::high_resolution_clock::now();
-#endif  // TIMER
 
-          s = db->Get(r_options, to_string(key), &value);
+        // start measuring the time taken by the query
+        query_start = std::chrono::high_resolution_clock::now();
 
-#ifdef TIMER
-          auto stop = std::chrono::high_resolution_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-              stop - start);
-          cum_time_all_operations += duration.count();
-          cum_time_pointq += duration.count();
-#endif  // TIMER
-        }
+        s = db->Get(r_options, std::to_string(key), &value);
         // if (!s.ok()) std::cerr << s.ToString() << "key = " << key <<
         // std::endl;
         //  assert(s.ok());
+
+        // end measuring the time taken by the query
+        query_end = std::chrono::high_resolution_clock::now();
+        total_query_time_elapsed += query_end - query_start;
+
         op_track._point_queries_completed++;
         counter++;
         fade_stats->point_queries_completed++;
@@ -291,31 +317,24 @@ int runWorkload(EmuEnv* _env) {
         workload_file >> start_key >> end_key;
         // std::cout << instruction << " " << start_key << " " << end_key << ""
         // << std::endl;
-        {
-#ifdef TIMER
-          auto start = std::chrono::high_resolution_clock::now();
-#endif  // TIMER
-          it->Refresh();
-          assert(it->status().ok());
-          for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
-            // std::cout << "found key = " << it->key().ToString() << std::endl;
-            if (it->key().ToString() == std::to_string(end_key)) {
-              break;
-            }
-          }
-          if (!it->status().ok()) {
-            std::cerr << it->status().ToString() << std::endl;
-          }
 
-#ifdef TIMER
-          auto stop = std::chrono::high_resolution_clock::now();
-          auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-              stop - start);
-          cum_time_all_operations += duration.count();
-          cum_time_range_queries += duration.count();
-          each_range_query_time.push_back(duration.count());
-#endif  // TIMER
+        // start measuring the time taken by the range query
+        range_query_start = std::chrono::high_resolution_clock::now();
+
+        it->Refresh();
+        assert(it->status().ok());
+        for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
+          // std::cout << "found key = " << it->key().ToString() << std::endl;
+          if (it->key().ToString() == std::to_string(end_key)) {
+            break;
+          }
         }
+        if (!it->status().ok()) {
+          std::cerr << it->status().ToString() << std::endl;
+        }
+        // end measuring the time taken by the query
+        range_query_end = std::chrono::high_resolution_clock::now();
+        total_range_query_time_elapsed += range_query_end - range_query_start;
 
         op_track._range_queries_completed++;
         counter++;
@@ -342,6 +361,30 @@ int runWorkload(EmuEnv* _env) {
   // // Flush the memtable before close
   // Status CloseDB(DB *&db, const FlushOptions &flush_op);
 
+  // end measuring the time taken by the workload
+  // and printing the results
+  end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed_seconds = end - start;
+  std::cout
+      << "\n----------------------Workload Complete-----------------------"
+      << std::endl;
+  std::cout << "Total time taken by workload = " << elapsed_seconds.count()
+            << " seconds" << std::endl;
+  std::cout << "Total time taken by inserts = "
+            << total_insert_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by queries = "
+            << total_query_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by updates = "
+            << total_update_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by deletes = "
+            << total_delete_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by range deletes = "
+            << total_range_delete_time_elapsed.count() << " seconds"
+            << std::endl;
+  std::cout << "Total time taken by range queries = "
+            << total_range_query_time_elapsed.count() << " seconds"
+            << std::endl;
+
   workload_file.close();
 
   {
@@ -350,17 +393,7 @@ int runWorkload(EmuEnv* _env) {
     db->GetLiveFiles(live_files, &manifest_size, true /*flush_memtable*/);
     WaitForCompactions(db);
   }
-
-  {
-#ifdef TIMER
-    auto workload_stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        workload_stop - workload_start);
-    cum_time_workload += duration.count();
-#endif  // TIMER
-  }
-
-  //   CompactionMayAllComplete(db);
+  // CompactionMayAllComplete(db);
   s = db->Close();
   if (!s.ok()) std::cerr << s.ToString() << std::endl;
   assert(s.ok());
@@ -370,41 +403,21 @@ int runWorkload(EmuEnv* _env) {
             << " completion_status = " << fade_stats->completion_status
             << std::endl;
 
-  //   // sleep(5);
+  // sleep(5);
 
-  //   // reopening (and closing the DB to flush LOG to .sst file)
-  //   // _env->compaction_pri = kMinOverlappingRatio;
-  //   std::cout << "Re-opening DB -- Re-setting compaction style to: "
-  //             << _env->compaction_pri << "\n";
-  //   s = DB::Open(options, kDBPath, &db);
-  //   fade_stats->db_open = true;
-  //   if (!s.ok()) std::cerr << s.ToString() << std::endl;
-  //   assert(s.ok());
-  //   s = db->Close();
-  //   if (!s.ok()) std::cerr << s.ToString() << std::endl;
-  //   assert(s.ok());
+  // reopening (and closing the DB to flush LOG to .sst file)
+  // _env->compaction_pri = kMinOverlappingRatio;
+  // std::cout << "Re-opening DB -- Re-setting compaction style to: "
+  //           << _env->compaction_pri << "\n";
+  // s = DB::Open(options, kDBPath, &db);
+  // fade_stats->db_open = true;
+  // if (!s.ok()) std::cerr << s.ToString() << std::endl;
+  // assert(s.ok());
+  // s = db->Close();
+  // if (!s.ok()) std::cerr << s.ToString() << std::endl;
+  // assert(s.ok());
 
   std::cout << "End of experiment - TEST !!\n";
-
-#ifdef TIMER
-  std::cout << "=====================" << std::endl;
-  std::cout << "total workload execution time: " << cum_time_workload
-            << "(ns) / " << cum_time_workload / 1e9 << "(sec)" << std::endl;
-  std::cout << "total time spent in all operations: " << cum_time_all_operations
-            << "(ns) / " << cum_time_all_operations / 1e9 << "(sec)"
-            << std::endl;
-  std::cout << "total time spent for inserts: " << cum_time_inserts << "(ns) / "
-            << cum_time_inserts / 1e9 << "(sec)" << std::endl;
-  std::cout << "total time spent for updates: " << cum_time_updates << "(ns) / "
-            << cum_time_updates / 1e9 << "(sec)" << std::endl;
-  std::cout << "total time spent for point queries" << cum_time_pointq
-            << "(ns) / " << cum_time_pointq / 1e9 << "(sec)" << std::endl;
-  std::cout << "total time spent for range queries: " << cum_time_range_queries
-            << "(ns) / " << cum_time_range_queries / 1e9 << "(sec)"
-            << std::endl;
-
-  std::cout << std::endl;
-#endif  // TIMER
 
   // !YBS-sep09-XX!
   if (my_clock_get_time(&end_time) == -1)
