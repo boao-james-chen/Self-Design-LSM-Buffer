@@ -416,6 +416,6 @@ MemTableRepFactory* NewHashLinkListRepFactory(
     size_t bucket_count = 50000, size_t huge_page_tlb_size = 0,
     int bucket_entries_logging_threshold = 4096,
     bool if_log_bucket_dist_when_flash = true,
-    uint32_t threshold_use_skiplist = 256);
+    uint32_t threshold_use_skiplist = 5);
 
 }  // namespace ROCKSDB_NAMESPACE
