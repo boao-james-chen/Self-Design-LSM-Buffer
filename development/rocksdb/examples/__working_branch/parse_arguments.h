@@ -98,6 +98,12 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
       "for Hash Linkedlist; def: 1]",
       {'m', "memtable_factory"});
 
+    // !!AS-feb15-XXIV!!
+  args::ValueFlag<int> prefix_length_cmd(
+      group1, "prefix_length",
+      "[Prefix Length: Number of bytes of the key forming the prefix; def: 1]",
+      {'l', "prefix_length"});
+
   try {
     parser.ParseCLI(argc, argv);
   } catch (args::Help&) {
@@ -164,6 +170,8 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
 
   _env->memtable_factory =
       memtable_factory_cmd ? args::get(memtable_factory_cmd) : 1;
+
+    _env->prefix_length = prefix_length_cmd ? args::get(prefix_length_cmd) : 0;
 
   return 0;
 }

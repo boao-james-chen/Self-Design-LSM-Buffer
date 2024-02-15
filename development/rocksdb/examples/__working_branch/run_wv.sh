@@ -7,13 +7,13 @@
 
 
 #other variables remain fixed
-for E in 64 128 256 1024; do #Entry size (B)
-  for value in 1 2 3 4; do
-    output_file="out_m_${value}_E_${E}.txt"
-    ./working_version -m "$value" -E "$E" > "./outputs/E_varied/$output_file"
-    echo "Run with -m $value completed. Output saved to $output_file"
-  done
-done
+# for E in 64 128 256 1024; do #Entry size (B)
+#   for value in 1 2 3 4; do
+#     output_file="out_m_${value}_E_${E}.txt"
+#     ./working_version -m "$value" -E "$E" > "./outputs/E_varied/$output_file"
+#     echo "Run with -m $value completed. Output saved to $output_file"
+#   done
+# done
 
 #other variables remain fixed
 # for P in 1024 2048 4096; do # Buffer size in pages
@@ -89,6 +89,15 @@ done
 #     echo "Run with -m $value completed. Output saved to $output_file"
 #   done
 # done
+
+
+for l in {1..30}; do # Prefix Length
+  for value in 1 3 4; do
+    output_file="out_m_${value}_l_${l}.txt"
+    ./working_version -m "$value" -l "$l" > "./outputs/l_varied/$output_file"
+    echo "Run with -m $value -l $l completed. Output saved to $output_file"
+  done
+done
 
 #!/bin/bash
 

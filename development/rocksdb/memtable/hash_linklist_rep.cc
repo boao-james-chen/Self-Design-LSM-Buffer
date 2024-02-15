@@ -637,13 +637,13 @@ void HashLinkListRep::Insert(KeyHandle handle) {
          GetLengthPrefixedSlice(x->key).ToString(true).c_str());
   }
 
-  std::cout << "I'm here. total Entries: " << header->GetNumEntries() << std::endl << std::flush;
+  //std::cout << "I'm here. total Entries: " << header->GetNumEntries() << std::endl << std::flush;
   if (header->GetNumEntries() == threshold_use_skiplist_) {
     //log it, std::err/std::out message-> make sure to flush it
     //try and set larger values of the threshold and see what happens
     // Case 3. number of entries reaches the threshold so need to convert to
     // skip list.
-    std::cout<<"Inside case 3"<<std::endl;
+    //std::cout<<"Inside case 3"<<std::endl;
     LinkListIterator bucket_iter(
         this, reinterpret_cast<Node*>(
                   first_next_pointer->load(std::memory_order_relaxed)));

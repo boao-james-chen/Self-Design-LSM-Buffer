@@ -33,12 +33,12 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
     case 3:
       op->memtable_factory.reset(NewHashSkipListRepFactory());
       // defines a fixed length prefix_extractor for testing HashLinkList & HashSkipList
-      op->prefix_extractor.reset(NewFixedPrefixTransform(prefix_len));
+      op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
       break;
     case 4:
       op->memtable_factory.reset(NewHashLinkListRepFactory());
       // defines a fixed length prefix_extractor for testing HashLinkList & HashSkipList
-      op->prefix_extractor.reset(NewFixedPrefixTransform(prefix_len));
+      op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
       break;
     default:
       std::cerr << "error: memtable_factory" << std::endl;

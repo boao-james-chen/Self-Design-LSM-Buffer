@@ -176,6 +176,8 @@ class EmuEnv {
   bool report_bg_io_stats;
   int max_successive_merges;  // read-modified-write related
 
+  uint32_t prefix_length;
+
   // Other DBOptions
   bool create_if_missing;
   int delayed_write_rate;
