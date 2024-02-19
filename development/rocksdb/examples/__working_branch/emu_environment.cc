@@ -51,7 +51,7 @@ EmuEnv::EmuEnv() {
   memtable_factory = 1;  // 1 for skiplist, 2 for vector, 3 for hash skiplist, 4
                          // for hash linklist
 
-  prefix_length =0;                       
+  prefix_length = 0;
   target_file_size_base = buffer_size;
   level_compaction_dynamic_level_bytes = false;
   compaction_style =
