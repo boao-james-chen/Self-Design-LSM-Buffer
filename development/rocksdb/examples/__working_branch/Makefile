@@ -12,6 +12,11 @@ ifneq ($(USE_RTTI), 1)
 	CXXFLAGS += -fno-rtti
 endif
 
+## (shubham) Emable these options for debug
+## The librocksdb_debug is not working
+# CFLAGS += -pg
+# CXXFLAGS += -pg
+
 .PHONY: clean librocksdb
 
 all: working_version 
@@ -19,11 +24,8 @@ all: working_version
 working_version: librocksdb working_version.cc emu_environment.cc stats.cc aux_time.cc
 	$(CXX) $(CXXFLAGS) $@.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb.a -I../../include -I../.. -O2 -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS)
 
-working_version_profile: librocksdb working_version.cc emu_environment.cc stats.cc aux_time.cc
-	$(CXX) $(CXXFLAGS) working_version.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb.a -I../../include -I../.. -O2 -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS) -DTIMER -DPROFILE
-
-working_version_debug: librocksdb_debug working_version.cc emu_environment.cc stats.cc aux_time.cc
-	$(CXX) $(CXXFLAGS) working_version.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb_debug.a -I../../include -I../.. -O0 -ggdb -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS)
+# working_version_debug: librocksdb_debug working_version.cc emu_environment.cc stats.cc aux_time.cc
+# 	$(CXX) $(CXXFLAGS) working_version.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb_debug.a -I../../include -I../.. -O0 -ggdb -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS)
 
 clean:
 	rm -rf working_version working_version_profile working_version_debug working_version_debug.* 
@@ -31,5 +33,5 @@ clean:
 librocksdb:
 	cd ../.. && $(MAKE) static_lib
 
-librocksdb_debug:
-	cd ../.. && $(MAKE) dbg
+# librocksdb_debug:
+# 	cd ../.. && $(MAKE) dbg
