@@ -177,6 +177,8 @@ class EmuEnv {
   int max_successive_merges;  // read-modified-write related
 
   uint32_t prefix_length;
+  unsigned long bucket_count; // Used for Hash** Memtable
+  unsigned long threshold_use_skiplist; // used for conversion of HashLinkList to HashSkipList 
 
   // Other DBOptions
   bool create_if_missing;

@@ -1,5 +1,6 @@
 #include <rocksdb/db.h>
 #include <rocksdb/filter_policy.h>
+#include <rocksdb/options.h>
 #include <rocksdb/slice_transform.h>
 #include <rocksdb/statistics.h>
 #include <rocksdb/table.h>
@@ -17,6 +18,18 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
   // min 2 // !YBS-sep07-XX!
   op->max_write_buffer_number = _env->max_write_buffer_number;
 
+  // ============================================================ //
+  //     Default arguments for HashSkipList and HashLinkList      //
+  // ============================================================ //
+
+  int32_t skiplist_height = 4;
+  int32_t skiplist_branching_factor = 4;
+  size_t huge_page_tlb_size = 0;
+  int bucket_entries_logging_threshold = 4096;
+  bool if_log_bucket_dist_when_flash = true;
+
+  // ============================================================ //
+
   switch (_env->memtable_factory) {
     case 1:
       op->memtable_factory =
@@ -27,11 +40,15 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
           std::shared_ptr<VectorRepFactory>(new VectorRepFactory);
       break;
     case 3:
-      op->memtable_factory.reset(NewHashSkipListRepFactory());
+      op->memtable_factory.reset(NewHashSkipListRepFactory(
+          _env->bucket_count, skiplist_height, skiplist_branching_factor));
       op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
       break;
     case 4:
-      op->memtable_factory.reset(NewHashLinkListRepFactory());
+      op->memtable_factory.reset(NewHashLinkListRepFactory(
+          _env->bucket_count, huge_page_tlb_size,
+          bucket_entries_logging_threshold, if_log_bucket_dist_when_flash,
+          _env->threshold_use_skiplist));
       op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
       break;
     default:
@@ -70,6 +87,10 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
     default:
       std::cerr << "ERROR: INVALID Data movement policy!" << std::endl;
   }
+
+  // (shubham) enforce strict size for SST files
+  // op->level_compaction_dynamic_file_size = false;  // deprecated
+  // op->ignore_max_compaction_bytes_for_input = false;  // deprecated
 
   op->max_bytes_for_level_multiplier = _env->size_ratio;
   op->allow_concurrent_memtable_write = _env->allow_concurrent_memtable_write;

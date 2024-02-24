@@ -32,6 +32,37 @@ void printWorkloadStatistics(operation_tracker op_track);
 inline void showProgress(const uint32_t& workload_size,
                          const uint32_t& counter);
 
+struct InsertEvent {
+  std::chrono::steady_clock::time_point timestamp_;
+  std::chrono::duration<double> time_taken_;
+};
+
+struct FlushEvent {
+  std::chrono::steady_clock::time_point timestamp_;
+  uint64_t num_entries_;
+  uint64_t data_size_;
+  uint64_t index_size_;
+  uint64_t filter_size_;
+};
+
+struct CompactionEvent {
+  std::chrono::steady_clock::time_point timestamp_;
+  uint64_t num_input_files_;
+  uint64_t num_output_files_;
+  uint64_t num_entries_inp_;
+  uint64_t data_size_inp_;
+  uint64_t index_size_inp_;
+  uint64_t filter_size_inp_;
+  uint64_t num_entries_out_;
+  uint64_t data_size_out_;
+  uint64_t index_size_out_;
+  uint64_t filter_size_out_;
+};
+
+// std::vector<InsertEvent> insert_events_;
+std::vector<FlushEvent> flush_events_;
+std::vector<CompactionEvent> compaction_events_;
+
 /*
  * The compactions can run in background even after the workload is completely
  * executed so, we have to wait for them to complete. Compaction Listener gets
@@ -39,20 +70,76 @@ inline void showProgress(const uint32_t& workload_size,
  * After every compaction we check, if more compactions are required with
  * `WaitForCompaction` function, if not then it signals to close the db
  */
-class CompactionsListner : public rocksdb::EventListener {
+class CompactionsListner : public EventListener {
  public:
   explicit CompactionsListner() {}
 
   void OnCompactionCompleted(
-      rocksdb::DB* /*db*/, const rocksdb::CompactionJobInfo& /*ci*/) override {
+      DB* /*db*/, const CompactionJobInfo& compaction_job_info) override {
     std::lock_guard<std::mutex> lock(mtx);
     compaction_complete = true;
     cv.notify_one();
+
+    if (compaction_job_info.compaction_reason != CompactionReason::kFlush) {
+      uint64_t num_entries_inp = 0;
+      uint64_t data_size_inp = 0;
+      uint64_t index_size_inp = 0;
+      uint64_t filter_size_inp = 0;
+      uint64_t num_entries_out = 0;
+      uint64_t data_size_out = 0;
+      uint64_t index_size_out = 0;
+      uint64_t filter_size_out = 0;
+
+      for (const auto& pair : compaction_job_info.table_properties) {
+        const std::shared_ptr<const TableProperties>& tp = pair.second;
+
+        if (std::find(compaction_job_info.input_files.begin(),
+                      compaction_job_info.input_files.end(),
+                      pair.first) != compaction_job_info.input_files.end()) {
+          num_entries_inp += tp->num_entries;
+          data_size_inp += tp->data_size;
+          index_size_inp += tp->index_size;
+          filter_size_inp += tp->filter_size;
+        } else {
+          num_entries_out += tp->num_entries;
+          data_size_out += tp->data_size;
+          index_size_out += tp->index_size;
+          filter_size_out += tp->filter_size;
+        }
+      }
+
+      compaction_events_.push_back(CompactionEvent{
+          std::chrono::steady_clock::now(),
+          compaction_job_info.input_files.size(),
+          compaction_job_info.output_files.size(), num_entries_inp,
+          data_size_inp, index_size_inp, filter_size_inp, num_entries_out,
+          data_size_out, index_size_out, filter_size_out});
+    }
   }
 };
 
 /*
- * Wait for compactions that are running (or will run) to make the 
+ * The flushes are happening in background and they send a event
+ * once they are complete. This is to track the bytes written
+ */
+class BufferFlushListner : public EventListener {
+ public:
+  explicit BufferFlushListner() {}
+
+  void OnFlushCompleted(DB* /*db*/,
+                        const FlushJobInfo& flush_job_info) override {
+    if (flush_job_info.flush_reason == FlushReason::kWriteBufferFull ||
+        flush_job_info.flush_reason == FlushReason::kGetLiveFiles) {
+      TableProperties tp = flush_job_info.table_properties;
+      flush_events_.push_back(FlushEvent{std::chrono::steady_clock::now(),
+                                         tp.num_entries, tp.data_size,
+                                         tp.index_size, tp.filter_size});
+    }
+  }
+};
+
+/*
+ * Wait for compactions that are running (or will run) to make the
  * LSM tree in its shape. Check `CompactionListner` for more details.
  */
 void WaitForCompactions(rocksdb::DB* db) {
@@ -83,6 +170,7 @@ int runWorkload(EmuEnv* _env) {
   ReadOptions r_options;
   BlockBasedTableOptions table_options;
   FlushOptions f_options;
+  auto start_time_point = std::chrono::steady_clock::now();
 
   configOptions(_env, &options, &table_options, &w_options, &r_options,
                 &f_options);
@@ -98,7 +186,10 @@ int runWorkload(EmuEnv* _env) {
 
   std::shared_ptr<CompactionsListner> listener =
       std::make_shared<CompactionsListner>();
+  std::shared_ptr<BufferFlushListner> bf_listner =
+      std::make_shared<BufferFlushListner>();
   options.listeners.emplace_back(listener);
+  options.listeners.emplace_back(bf_listner);
 
   printExperimentalSetup(_env);  // !YBS-sep07-XX!
   std::cout << "Maximum #OpenFiles = " << options.max_open_files
@@ -226,6 +317,8 @@ int runWorkload(EmuEnv* _env) {
         // end measuring the time taken by the insert
         insert_end = std::chrono::high_resolution_clock::now();
         total_insert_time_elapsed += insert_end - insert_start;
+        // insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
+        //                                      insert_end - insert_start});
         op_track._inserts_completed++;
         counter++;
         fade_stats->inserts_completed++;
@@ -418,6 +511,57 @@ int runWorkload(EmuEnv* _env) {
   // assert(s.ok());
 
   std::cout << "End of experiment - TEST !!\n";
+
+  std::ofstream flush_stats_file("flush_stats.csv");
+  flush_stats_file << "TimePoint,NumEntries,DataSize,IndexSize,FilterSize"
+                   << std::endl;
+
+  for (int i = 0; i < flush_events_.size(); i++) {
+    auto element = flush_events_[i];
+    flush_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+                            element.timestamp_ - start_time_point)
+                            .count()
+                     << "," << element.num_entries_ << "," << element.data_size_
+                     << "," << element.index_size_ << ","
+                     << element.filter_size_ << std::endl;
+  }
+
+  flush_stats_file.close();
+
+  // std::ofstream inserts_stats_file("insert_stats.csv");
+  // inserts_stats_file << "TimePoint,TimeTaken" << std::endl;
+
+  // for (int i = 0; i < insert_events_.size(); i++) {
+  //   auto element = insert_events_[i];
+  //   inserts_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+  //                             element.timestamp_ - start_time_point)
+  //                             .count()
+  //                      << "," << element.time_taken_.count() << std::endl;
+  // }
+
+  // inserts_stats_file.close();
+
+  std::ofstream compaction_stats_file("compaction_stats.csv");
+  compaction_stats_file << "TimePoint,NumInputFiles,NumOutputFile,NumEntriesInput,"
+                           "DataSizeInput,IndexSizeInput,FilterSizeInput,NumEntriesOutput,"
+                           "DataSizeOutput,IndexSizeOutput,FilterSizeOutput"
+                        << std::endl;
+
+  for (int i = 0; i < compaction_events_.size(); i++) {
+    auto element = compaction_events_[i];
+    compaction_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+                                 element.timestamp_ - start_time_point)
+                                 .count()
+                          << "," << element.num_input_files_ << ","
+                          << element.num_output_files_ << ","
+                          << element.num_entries_inp_ << "," << element.data_size_inp_
+                          << "," << element.index_size_inp_ << ","
+                          << element.filter_size_inp_ << "," << element.num_entries_out_
+                          << "," << element.data_size_out_ << "," << element.index_size_out_ 
+                          << "," << element.filter_size_out_ << std::endl;
+  }
+
+  compaction_stats_file.close();
 
   // !YBS-sep09-XX!
   if (my_clock_get_time(&end_time) == -1)

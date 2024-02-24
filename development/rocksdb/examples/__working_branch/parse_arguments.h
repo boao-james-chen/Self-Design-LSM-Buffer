@@ -104,6 +104,18 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
       "[Prefix Length: Number of bytes of the key forming the prefix; def: 1]",
       {'l', "prefix_length"});
 
+  args::ValueFlag<long> bucket_count_cmd(
+      group1, "bucket_count",
+      "[Bucket Count]: Number of buckets for the hash table in HashSkipList & "
+      "HashLinkList Memtables; def: 50000]",
+      {"bucket_count", "bucket_count"});
+
+  args::ValueFlag<long> threshold_use_skiplist_cmd(
+      group1, "threshold_use_skiplist",
+      "[Threshold Use SkipList]: Threshold based on which the conversion will "
+      "happen from HashLinkList to HashSkipList; def: 256]",
+      {"threshold_use_skiplist", "threshold_use_skiplist"});
+
   try {
     parser.ParseCLI(argc, argv);
   } catch (args::Help&) {
@@ -172,6 +184,12 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
       memtable_factory_cmd ? args::get(memtable_factory_cmd) : 1;
 
   _env->prefix_length = prefix_length_cmd ? args::get(prefix_length_cmd) : 0;
+
+  _env->bucket_count =
+      bucket_count_cmd ? args::get(bucket_count_cmd) : _env->bucket_count;
+  _env->threshold_use_skiplist = threshold_use_skiplist_cmd
+                                     ? args::get(threshold_use_skiplist_cmd)
+                                     : _env->threshold_use_skiplist;
 
   return 0;
 }

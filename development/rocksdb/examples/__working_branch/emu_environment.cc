@@ -52,6 +52,9 @@ EmuEnv::EmuEnv() {
                          // for hash linklist
 
   prefix_length = 0;
+  bucket_count = 500000;
+  threshold_use_skiplist = 256;
+
   target_file_size_base = buffer_size;
   level_compaction_dynamic_level_bytes = false;
   compaction_style =
