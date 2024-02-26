@@ -37,6 +37,11 @@ struct InsertEvent {
   std::chrono::duration<double> time_taken_;
 };
 
+struct PointQueryEvent {
+  std::chrono::steady_clock::time_point timestamp_;
+  std::chrono::duration<double> time_taken_;
+};
+
 struct FlushEvent {
   std::chrono::steady_clock::time_point timestamp_;
   uint64_t num_entries_;
@@ -59,7 +64,8 @@ struct CompactionEvent {
   uint64_t filter_size_out_;
 };
 
-// std::vector<InsertEvent> insert_events_;
+std::vector<InsertEvent> insert_events_;
+std::vector<PointQueryEvent> point_query_events_;
 std::vector<FlushEvent> flush_events_;
 std::vector<CompactionEvent> compaction_events_;
 
@@ -317,8 +323,8 @@ int runWorkload(EmuEnv* _env) {
         // end measuring the time taken by the insert
         insert_end = std::chrono::high_resolution_clock::now();
         total_insert_time_elapsed += insert_end - insert_start;
-        // insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
-        //                                      insert_end - insert_start});
+        insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
+                                             insert_end - insert_start});
         op_track._inserts_completed++;
         counter++;
         fade_stats->inserts_completed++;
@@ -400,7 +406,8 @@ int runWorkload(EmuEnv* _env) {
         // end measuring the time taken by the query
         query_end = std::chrono::high_resolution_clock::now();
         total_query_time_elapsed += query_end - query_start;
-
+        point_query_events_.push_back(PointQueryEvent{std::chrono::steady_clock::now(),
+                                             insert_end - insert_start});
         op_track._point_queries_completed++;
         counter++;
         fade_stats->point_queries_completed++;
@@ -528,18 +535,31 @@ int runWorkload(EmuEnv* _env) {
 
   flush_stats_file.close();
 
-  // std::ofstream inserts_stats_file("insert_stats.csv");
-  // inserts_stats_file << "TimePoint,TimeTaken" << std::endl;
+  std::ofstream inserts_stats_file("insert_stats.csv");
+  inserts_stats_file << "TimePoint,TimeTaken" << std::endl;
 
-  // for (int i = 0; i < insert_events_.size(); i++) {
-  //   auto element = insert_events_[i];
-  //   inserts_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
-  //                             element.timestamp_ - start_time_point)
-  //                             .count()
-  //                      << "," << element.time_taken_.count() << std::endl;
-  // }
+  for (int i = 0; i < insert_events_.size(); i++) {
+    auto element = insert_events_[i];
+    inserts_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+                              element.timestamp_ - start_time_point)
+                              .count()
+                       << "," << element.time_taken_.count() << std::endl;
+  }
 
-  // inserts_stats_file.close();
+  inserts_stats_file.close();
+
+  std::ofstream pq_stats_file("pq_stats.csv");
+  pq_stats_file << "TimePoint,TimeTaken" << std::endl;
+
+  for (int i = 0; i < point_query_events_.size(); i++) {
+    auto element = point_query_events_[i];
+    pq_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+                              element.timestamp_ - start_time_point)
+                              .count()
+                       << "," << element.time_taken_.count() << std::endl;
+  }
+
+  pq_stats_file.close();
 
   std::ofstream compaction_stats_file("compaction_stats.csv");
   compaction_stats_file << "TimePoint,NumInputFiles,NumOutputFile,NumEntriesInput,"

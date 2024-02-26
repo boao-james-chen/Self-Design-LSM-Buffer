@@ -18,18 +18,22 @@ if len(sys.argv) > 1:
 ## ============================================================ ##
 ##                     SET EXPERIMENT DEFAULTS                  ##
 ## ============================================================ ##
-## Also check in __main__ starting
+## Also check arguments defined in __main__
 
-inserts = 1000000
+inserts = 190000
 updates = 0
 range_queries = 0
 selectivity = 0
-point_queries = 0
+point_queries = 100000
 
-entry_sizes = [16, 32, 64, 128, 256]
-entries_per_page = [256, 128, 64, 32, 16]
+# entry_sizes = [16, 32, 64, 128]
+# entries_per_page = [256, 128, 64, 32]
 
-buffer_sizes_in_pages = [128, 512, 2048, 4096]
+entry_sizes = [64]
+entries_per_page = [64]
+
+# buffer_sizes_in_pages = [128, 512, 2048, 4096]
+buffer_sizes_in_pages = [4096]
 
 size_ratios = [2, 4, 6, 10]
 
@@ -48,7 +52,7 @@ memtable_factories = {
 
 # these are only applicable in HashSkipList & HashLinkList
 prefix_lengths = [0, 2, 6, 10, 12]
-bucket_counts = [1, 100, 10000, 100000]
+bucket_counts = [1, 100, 10000] #, 100000]
 
 
 ## ============================================================ ##
@@ -126,7 +130,7 @@ if __name__ == "__main__":
 
     for entry_size, epp in zip(entry_sizes, entries_per_page):
 
-        exp_dir = Path.joinpath(CWD, f"experiments-{entry_size}")
+        exp_dir = Path.joinpath(CWD, f"experiments-PQ-{entry_size}")
 
         if not exp_dir.exists():
             print(f"Creating new experiments directory: {exp_dir}")
