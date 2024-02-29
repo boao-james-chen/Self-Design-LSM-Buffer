@@ -13,6 +13,7 @@
 #include <array>
 #include <limits>
 #include <memory>
+// #include <iostream>
 
 #include "db/dbformat.h"
 #include "db/kv_checksum.h"
@@ -199,6 +200,8 @@ bool MemTable::ShouldFlushNow() {
   auto allocated_memory = table_->ApproximateMemoryUsage() +
                           range_del_table_->ApproximateMemoryUsage() +
                           arena_.MemoryAllocatedBytes();
+
+  // std::cout << allocated_memory << "," << arena_.AllocatedAndUnused() << std::endl << std::flush;
 
   approximate_memory_usage_.store(allocated_memory, std::memory_order_relaxed);
 
@@ -711,6 +714,9 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
   const uint32_t encoded_len = VarintLength(internal_key_size) +
                                internal_key_size + VarintLength(val_size) +
                                val_size + moptions_.protection_bytes_per_key;
+
+  // std::cout << encoded_len << "," << std::flush;
+
   char* buf = nullptr;
   std::unique_ptr<MemTableRep>& table =
       type == kTypeRangeDeletion ? range_del_table_ : table_;
@@ -763,6 +769,9 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
                        std::memory_order_relaxed);
     data_size_.store(data_size_.load(std::memory_order_relaxed) + encoded_len,
                      std::memory_order_relaxed);
+
+    // std::cout << "Total entries in Inserts: " << num_entries_ << "," << data_size_ << "," << std::endl << std::flush;
+
     if (type == kTypeDeletion || type == kTypeSingleDeletion ||
         type == kTypeDeletionWithTimestamp) {
       num_deletes_.store(num_deletes_.load(std::memory_order_relaxed) + 1,
@@ -1434,6 +1443,8 @@ Status MemTable::Update(SequenceNumber seq, ValueType value_type,
   LookupKey lkey(key, seq);
   Slice mem_key = lkey.memtable_key();
 
+    // std::cout << "Total Entries in Update: " << num_entries_ << "," << data_size_ << "," << std::endl << std::flush;
+
   std::unique_ptr<MemTableRep::Iterator> iter(
       table_->GetDynamicPrefixIterator());
   iter->Seek(lkey.internal_key(), mem_key.data());
@@ -1542,6 +1553,9 @@ Status MemTable::UpdateCallback(SequenceNumber seq, const Slice& key,
           }
           RecordTick(moptions_.statistics, NUMBER_KEYS_UPDATED);
           UpdateFlushState();
+
+          // std::cout << "Total Entries in UbdateCallback: " << num_entries_ << "," << data_size_ << "," << std::endl << std::flush;
+
           Slice new_value(prev_buffer, new_prev_size);
           if (kv_prot_info != nullptr) {
             ProtectionInfoKVOS64 updated_kv_prot_info(*kv_prot_info);

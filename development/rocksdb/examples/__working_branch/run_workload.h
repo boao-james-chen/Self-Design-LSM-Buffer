@@ -268,15 +268,13 @@ int runWorkload(EmuEnv* _env) {
     std::cerr << "Failed to get experiment start time" << std::endl;
   // !END
   // !YBS-apr15-XXI!
-  if (_env->compaction_pri == 9) {
-    _env->level0_file_num_compaction_trigger = _env->size_ratio;
-    _env->level0_stop_writes_trigger = _env->size_ratio;
-    // std::cout << "Compaction style = 1-Leveling :: Overloading
-    // level0_file_num_compaction_trigger to " <<
-    // _env->level0_file_num_compaction_trigger; std::cout << "Compaction style
-    // = 1-Leveling :: Overloading level0_stop_writes_trigger to " <<
-    // _env->level0_stop_writes_trigger;
-  }
+  // if (_env->compaction_pri == 9) {
+    _env->level0_file_num_compaction_trigger = 1;
+    _env->level0_stop_writes_trigger = 1;
+  //   std::cout << "Compaction style = 1-Leveling :: Overloading level0_file_num_compaction_trigger to " <<
+  //   _env->level0_file_num_compaction_trigger; std::cout << "Compaction style = 1-Leveling :: Overloading level0_stop_writes_trigger to " <<
+  //   _env->level0_stop_writes_trigger;
+  // }
   // !END
 
   // time variables for measuring the time taken by the workload

@@ -637,7 +637,6 @@ void HashLinkListRep::Insert(KeyHandle handle) {
          GetLengthPrefixedSlice(x->key).ToString(true).c_str());
   }
 
-  //std::cout << "I'm here. total Entries: " << header->GetNumEntries() << std::endl << std::flush;
   if (header->GetNumEntries() == threshold_use_skiplist_) {
     //log it, std::err/std::out message-> make sure to flush it
     //try and set larger values of the threshold and see what happens

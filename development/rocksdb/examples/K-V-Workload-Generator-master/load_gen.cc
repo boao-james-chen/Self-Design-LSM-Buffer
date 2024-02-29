@@ -23,6 +23,7 @@
 #define PD_THRESHOLD 0.1 // PD_THRESHOLD*insert_count number of inserts must be made before Point Deletes may take place (applicable when an empty database is being populated)
 #define RD_THRESHOLD 0.75 // RD_THRESHOLD*insert_count number of inserts must be made before Range Deletes may take place (applicable when an empty database is being populated)
 #define PQ_THRESHOLD 0.1 // PQ_THRESHOLD*insert_count number of inserts must be made before Point Queries may take place (applicable when an empty database is being populated)
+// #define PQ_THRESHOLD 1 // PQ_THRESHOLD*insert_count number of inserts must be made before Point Queries may take place (applicable when an empty database is being populated)
 #define RQ_THRESHOLD 0.1 // RQ_THRESHOLD*insert_count number of inserts must be made before Range Queries may take place (applicable when an empty database is being populated)
 #define STRING_KEY_ENABLED false
 #define FILENAME "workload.txt"

@@ -20,11 +20,12 @@ if len(sys.argv) > 1:
 ## ============================================================ ##
 ## Also check arguments defined in __main__
 
-inserts = 190000
+# inserts = 190000
+inserts = 1400000  # 000
 updates = 0
 range_queries = 0
 selectivity = 0
-point_queries = 100000
+point_queries = 100
 
 # entry_sizes = [16, 32, 64, 128]
 # entries_per_page = [256, 128, 64, 32]
@@ -50,10 +51,9 @@ memtable_factories = {
     HASHLINKLIST: 4,
 }
 
-# these are only applicable in HashSkipList & HashLinkList
-prefix_lengths = [0, 2, 6, 10, 12]
-bucket_counts = [1, 100, 10000] #, 100000]
-
+# # these are only applicable in HashSkipList & HashLinkList
+prefix_lengths = [0, 2, 6, 8, 10, 12]
+bucket_counts = [1, 1000, 5000, 8000, 10000] #, 100000]
 
 ## ============================================================ ##
 ##                              END                             ##
@@ -71,12 +71,12 @@ def separator(func):
 
 def cleanup(dirpath: Path):
     workload_file = Path.joinpath(dirpath, "workload.txt")
-    db_working_home = Path.joinpath(dirpath, "db_working_home")
-    shutil.rmtree(db_working_home)
+    # db_working_home = Path.joinpath(dirpath, "db_working_home")
+    # shutil.rmtree(db_working_home)
     workload_file.unlink()
 
 
-def create_workload(inserts, point_queries, entry_size, dirpath: Path):
+def create_workload(args, dirpath: Path):
     os.chdir(dirpath.parent)
     load_gen = Path.joinpath(CWD.parent, "K-V-Workload-Generator-master", "load_gen")
     if not load_gen.exists() or force_make:
@@ -85,7 +85,7 @@ def create_workload(inserts, point_queries, entry_size, dirpath: Path):
         os.popen("make -j48 load_gen").read()
 
     os.chdir(dirpath.parent)
-    load_gen_cmd = f"../../K-V-Workload-Generator-master/load_gen -I {inserts} -Q {point_queries} -E {entry_size}"
+    load_gen_cmd = f"../../K-V-Workload-Generator-master/load_gen -I {args['inserts']} -Q {args['point_queries']} -U {args['updates']} -S {args['range_queries']} -Y {args['selectivity']} -E {entry_size}"
     print(f"Running {load_gen_cmd}")
     os.popen(load_gen_cmd).read()
     print(f"Generated workload ...")
@@ -102,9 +102,7 @@ def run_worklaod(dirname, args, args_dict, exp_dir):
 
     if not workload_file.exists():
         create_workload(
-            args_dict["inserts"],
-            args_dict["point_queries"],
-            args_dict["entry_size"],
+            args_dict,
             dirpath,
         )
     shutil.copy(workload_file, dirpath)
@@ -117,7 +115,7 @@ def run_worklaod(dirname, args, args_dict, exp_dir):
         print("Running make -j48 working_version")
         os.popen("make -j48 working_version")
 
-    working_version_cmd = f"{CWD}/working_version {args} > workload.log"
+    working_version_cmd = f"{CWD}/working_version {args} --stat 1 > workload.log"
     os.chdir(dirpath)
     print(f"Running {working_version_cmd}")
     os.popen(working_version_cmd).read()
@@ -130,7 +128,7 @@ if __name__ == "__main__":
 
     for entry_size, epp in zip(entry_sizes, entries_per_page):
 
-        exp_dir = Path.joinpath(CWD, f"experiments-PQ-{entry_size}")
+        exp_dir = Path.joinpath(CWD, f"experiments-PQ-TEST-{entry_size}")
 
         if not exp_dir.exists():
             print(f"Creating new experiments directory: {exp_dir}")
@@ -157,6 +155,6 @@ if __name__ == "__main__":
                             for bucket_count in bucket_counts:
                                 run_worklaod(
                                     f"{dirname} l {prefix_len} bucket_count {bucket_count}",
-                                    f"{args} -l {prefix_len} --bucket_count {bucket_count} --threshold_use_skiplist {inserts}",
+                                    f"{args} -l {prefix_len} --bucket_count {bucket_count} --threshold_use_skiplist {2 * inserts}",
                                     args_dict, exp_dir
                                 )

@@ -12,10 +12,10 @@ ifneq ($(USE_RTTI), 1)
 	CXXFLAGS += -fno-rtti
 endif
 
-## (shubham) Emable these options for debug
-## The librocksdb_debug is not working
-# CFLAGS += -pg
-# CXXFLAGS += -pg
+# (shubham) Emable these options for debug
+# The librocksdb_debug is not working
+CFLAGS += -pg
+CXXFLAGS += -pg
 
 .PHONY: clean librocksdb
 
