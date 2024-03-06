@@ -13,7 +13,7 @@
 #include <array>
 #include <limits>
 #include <memory>
-// #include <iostream>
+#include <iostream>
 
 #include "db/dbformat.h"
 #include "db/kv_checksum.h"

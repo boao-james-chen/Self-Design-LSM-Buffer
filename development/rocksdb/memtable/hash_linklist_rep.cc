@@ -4,11 +4,18 @@
 //  (found in the LICENSE.Apache file in the root directory).
 //
 
-
 #include <algorithm>
 #include <atomic>
 
+#define PROFILE
+
+#ifdef PROFILE
+#include <chrono>
 #include <iostream>
+#endif  // PROFILE
+
+#include <iostream>
+
 #include "db/memtable.h"
 #include "memory/arena.h"
 #include "memtable/skiplist.h"
@@ -581,11 +588,23 @@ Node* HashLinkListRep::GetLinkListFirstNode(Pointer& bucket_pointer) const {
 }
 
 void HashLinkListRep::Insert(KeyHandle handle) {
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   Node* x = static_cast<Node*>(handle);
   assert(!Contains(x->key));
   Slice internal_key = GetLengthPrefixedSlice(x->key);
   auto transformed = GetPrefix(internal_key);
   auto& bucket = buckets_[GetHash(transformed)];
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "ComputeHashTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
   Pointer* first_next_pointer =
       static_cast<Pointer*>(bucket.load(std::memory_order_relaxed));
 
@@ -595,6 +614,15 @@ void HashLinkListRep::Insert(KeyHandle handle) {
     // we publish a pointer to "x" in prev[i].
     x->NoBarrier_SetNext(nullptr);
     bucket.store(x, std::memory_order_release);
+#ifdef PROFILE
+    auto iend_time = std::chrono::high_resolution_clock::now();
+    std::cout << "InsertTime: "
+              << std::chrono::duration_cast<std::chrono::microseconds>(
+                     iend_time - start_time)
+                     .count()
+              << std::endl
+              << std::flush;
+#endif  // PROFILE
     return;
   }
 
@@ -622,6 +650,16 @@ void HashLinkListRep::Insert(KeyHandle handle) {
       // incremental.
       skip_list_bucket_header->Counting_header.IncNumEntries();
       skip_list_bucket_header->skip_list.Insert(x->key);
+#ifdef PROFILE
+      auto iend_time = std::chrono::high_resolution_clock::now();
+      std::cout << "ConvertedToSkipList" << std::endl << std::flush;
+      std::cout << "InsertTime: "
+                << std::chrono::duration_cast<std::chrono::microseconds>(
+                       iend_time - start_time)
+                       .count()
+                << std::endl
+                << std::flush;
+#endif  // PROFILE
       return;
     }
   }
@@ -638,11 +676,11 @@ void HashLinkListRep::Insert(KeyHandle handle) {
   }
 
   if (header->GetNumEntries() == threshold_use_skiplist_) {
-    //log it, std::err/std::out message-> make sure to flush it
-    //try and set larger values of the threshold and see what happens
-    // Case 3. number of entries reaches the threshold so need to convert to
-    // skip list.
-    //std::cout<<"Inside case 3"<<std::endl;
+    // log it, std::err/std::out message-> make sure to flush it
+    // try and set larger values of the threshold and see what happens
+    //  Case 3. number of entries reaches the threshold so need to convert to
+    //  skip list.
+    // std::cout<<"Inside case 3"<<std::endl;
     LinkListIterator bucket_iter(
         this, reinterpret_cast<Node*>(
                   first_next_pointer->load(std::memory_order_relaxed)));
@@ -704,6 +742,15 @@ void HashLinkListRep::Insert(KeyHandle handle) {
       header->next.store(static_cast<void*>(x), std::memory_order_release);
     }
   }
+#ifdef PROFILE
+  auto iend_time = std::chrono::high_resolution_clock::now();
+  std::cout << "InsertTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(iend_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 bool HashLinkListRep::Contains(const char* key) const {
@@ -734,6 +781,9 @@ size_t HashLinkListRep::ApproximateMemoryUsage() {
 
 void HashLinkListRep::Get(const LookupKey& k, void* callback_args,
                           bool (*callback_func)(void* arg, const char* entry)) {
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   auto transformed = transform_->Transform(k.user_key());
   Pointer& bucket = GetBucket(transformed);
 
@@ -759,6 +809,15 @@ void HashLinkListRep::Get(const LookupKey& k, void* callback_args,
       }
     }
   }
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "PointQueryTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 MemTableRep::Iterator* HashLinkListRep::GetIterator(Arena* alloc_arena) {

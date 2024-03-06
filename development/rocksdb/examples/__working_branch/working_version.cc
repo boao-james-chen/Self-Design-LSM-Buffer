@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
   int s = runWorkload(_env);
 
-  fade_stats->printStats();
+  // fade_stats->printStats();
 
   return 0;
 }

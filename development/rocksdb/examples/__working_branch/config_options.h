@@ -150,10 +150,10 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
   op->max_background_jobs = _env->max_background_jobs;
   op->max_compaction_bytes = _env->max_compaction_bytes;
   op->max_bytes_for_level_base = _env->buffer_size * _env->size_ratio;
-  std::cout << "printing: max_bytes_for_level_base = "
-            << op->max_bytes_for_level_base
-            << " buffer_size = " << _env->buffer_size
-            << " size_ratio = " << _env->size_ratio << std::endl;
+  // std::cout << "printing: max_bytes_for_level_base = "
+  //           << op->max_bytes_for_level_base
+  //           << " buffer_size = " << _env->buffer_size
+  //           << " size_ratio = " << _env->size_ratio << std::endl;
   if (_env->merge_operator == 0) {
     ;  // do nothing
   } else {

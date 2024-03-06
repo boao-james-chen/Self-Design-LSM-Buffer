@@ -22,7 +22,7 @@ CXXFLAGS += -pg
 all: working_version 
 
 working_version: librocksdb working_version.cc emu_environment.cc stats.cc aux_time.cc
-	$(CXX) $(CXXFLAGS) $@.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb.a -I../../include -I../.. -O2 -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $@.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb.a -I../../include -I../.. -O2 -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS) -DPROFILE
 
 # working_version_debug: librocksdb_debug working_version.cc emu_environment.cc stats.cc aux_time.cc
 # 	$(CXX) $(CXXFLAGS) working_version.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb_debug.a -I../../include -I../.. -O0 -ggdb -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS)

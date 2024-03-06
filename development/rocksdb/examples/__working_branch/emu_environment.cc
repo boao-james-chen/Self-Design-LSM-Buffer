@@ -123,7 +123,7 @@ EmuEnv::EmuEnv() {
   low_pri = true;  // every insert is less important than compaction
   sync = false;  // make every write wait for sync with log (so we see real perf
                  // impact of insert)
-  disableWAL = false;   // TBC
+  disableWAL = true;   // TBC
   no_slowdown = false;  // enabling this will make some insertions fail
   ignore_missing_column_families = false;  // TBC
 

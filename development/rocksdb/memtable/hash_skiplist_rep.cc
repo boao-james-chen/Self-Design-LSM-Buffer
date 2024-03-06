@@ -6,6 +6,13 @@
 
 #include <atomic>
 
+#define PROFILE
+
+#ifdef PROFILE
+#include <chrono>
+#include <iostream>
+#endif  // PROFILE
+
 #include "db/memtable.h"
 #include "memory/arena.h"
 #include "memtable/skiplist.h"
@@ -264,11 +271,32 @@ HashSkipListRep::Bucket* HashSkipListRep::GetInitializedBucket(
 }
 
 void HashSkipListRep::Insert(KeyHandle handle) {
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   auto* key = static_cast<char*>(handle);
   assert(!Contains(key));
   auto transformed = transform_->Transform(UserKey(key));
   auto bucket = GetInitializedBucket(transformed);
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "ComputeHashTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
   bucket->Insert(key);
+#ifdef PROFILE
+  auto iend_time = std::chrono::high_resolution_clock::now();
+  std::cout << "InsertTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(iend_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 bool HashSkipListRep::Contains(const char* key) const {
@@ -284,6 +312,9 @@ size_t HashSkipListRep::ApproximateMemoryUsage() { return 0; }
 
 void HashSkipListRep::Get(const LookupKey& k, void* callback_args,
                           bool (*callback_func)(void* arg, const char* entry)) {
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   auto transformed = transform_->Transform(k.user_key());
   auto bucket = GetBucket(transformed);
   if (bucket != nullptr) {
@@ -293,6 +324,15 @@ void HashSkipListRep::Get(const LookupKey& k, void* callback_args,
          iter.Next()) {
     }
   }
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "PointQueryTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 MemTableRep::Iterator* HashSkipListRep::GetIterator(Arena* arena) {

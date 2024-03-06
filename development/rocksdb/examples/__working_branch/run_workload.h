@@ -187,7 +187,7 @@ int runWorkload(EmuEnv* _env) {
 
   if (_env->destroy_database) {
     DestroyDB(kDBPath, options);
-    std::cout << "Destroying database ..." << std::endl;
+    // std::cout << "Destroying database ..." << std::endl;
   }
 
   std::shared_ptr<CompactionsListner> listener =
@@ -198,10 +198,10 @@ int runWorkload(EmuEnv* _env) {
   options.listeners.emplace_back(bf_listner);
 
   printExperimentalSetup(_env);  // !YBS-sep07-XX!
-  std::cout << "Maximum #OpenFiles = " << options.max_open_files
-            << std::endl;  // !YBS-sep07-XX!
-  std::cout << "Maximum #ThreadsUsedToOpenFiles = "
-            << options.max_file_opening_threads << std::endl;  // !YBS-sep07-XX!
+  // std::cout << "Maximum #OpenFiles = " << options.max_open_files
+            // << std::endl;  // !YBS-sep07-XX!
+  // std::cout << "Maximum #ThreadsUsedToOpenFiles = "
+            // << options.max_file_opening_threads << std::endl;  // !YBS-sep07-XX!
   Status s = DB::Open(options, kDBPath, &db);
   if (!s.ok()) std::cerr << s.ToString() << std::endl;
   assert(s.ok());
@@ -224,7 +224,7 @@ int runWorkload(EmuEnv* _env) {
   // !YBS-sep09-XX!
   // Clearing the system cache
   if (_env->clear_system_cache) {
-    std::cout << "Clearing system cache ..." << std::endl;
+    // std::cout << "Clearing system cache ..." << std::endl;
     system("sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'");
   }
   // START stat collection
@@ -238,17 +238,17 @@ int runWorkload(EmuEnv* _env) {
     rocksdb::get_iostats_context()->Reset();
     // end perf/iostat code
   }
-  if (options.compaction_style == kCompactionStyleUniversal)
-    std::cout << "Compaction Eagerness: Tiering (kCompactionStyleUniversal)"
-              << std::endl;
-  else if (_env->compaction_pri == 9)  // !YBS-apr15-XXI!
-    std::cout << "Compaction Eagerness: 1-Leveling (variation of "
-                 "kCompactionStyleLeveling)"
-              << std::endl;  // !YBS-apr06-XXI!
-  else
-    std::cout
-        << "Compaction Eagerness: Hybrid leveling (kCompactionStyleLeveling)"
-        << std::endl;
+  // if (options.compaction_style == kCompactionStyleUniversal)
+  //   // std::cout << "Compaction Eagerness: Tiering (kCompactionStyleUniversal)"
+  //             << std::endl;
+  // else if (_env->compaction_pri == 9)  // !YBS-apr15-XXI!
+  //   // std::cout << "Compaction Eagerness: 1-Leveling (variation of "
+  //                "kCompactionStyleLeveling)"
+  //             << std::endl;  // !YBS-apr06-XXI!
+  // else
+  //   std::cout
+  //       << "Compaction Eagerness: Hybrid leveling (kCompactionStyleLeveling)"
+  //       << std::endl;
   // !END
 
   // re-opening workload file to execute workload
@@ -271,8 +271,8 @@ int runWorkload(EmuEnv* _env) {
   // if (_env->compaction_pri == 9) {
     _env->level0_file_num_compaction_trigger = 1;
     _env->level0_stop_writes_trigger = 1;
-  //   std::cout << "Compaction style = 1-Leveling :: Overloading level0_file_num_compaction_trigger to " <<
-  //   _env->level0_file_num_compaction_trigger; std::cout << "Compaction style = 1-Leveling :: Overloading level0_stop_writes_trigger to " <<
+  //   // std::cout << "Compaction style = 1-Leveling :: Overloading level0_file_num_compaction_trigger to " <<
+  //   _env->level0_file_num_compaction_trigger; // std::cout << "Compaction style = 1-Leveling :: Overloading level0_stop_writes_trigger to " <<
   //   _env->level0_stop_writes_trigger;
   // }
   // !END
@@ -308,7 +308,7 @@ int runWorkload(EmuEnv* _env) {
     switch (instruction) {
       case 'I':  // insert
         workload_file >> key >> value;
-        // if (_env->verbosity == 2) std::cout << instruction << " " << key << "
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key << "
         // " << value << "" << std::endl;
 
         // start measuring the time taken by the insert
@@ -330,7 +330,7 @@ int runWorkload(EmuEnv* _env) {
 
       case 'U':  // update
         workload_file >> key >> value;
-        // if (_env->verbosity == 2) std::cout << instruction << " " << key << "
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key << "
         // " << value << "" << std::endl;
 
         // start measuring the time taken by the update
@@ -350,7 +350,7 @@ int runWorkload(EmuEnv* _env) {
 
       case 'D':  // point delete
         workload_file >> key;
-        // if (_env->verbosity == 2) std::cout << instruction << " " << key <<
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key <<
         // "" << std::endl;
 
         // start measuring the time taken by the delete
@@ -368,7 +368,7 @@ int runWorkload(EmuEnv* _env) {
 
       case 'R':  // range delete
         workload_file >> start_key >> end_key;
-        // if (_env->verbosity == 2) std::cout << instruction << " " <<
+        // if (_env->verbosity == 2) // std::cout << instruction << " " <<
         // start_key << " " << end_key << "" << std::endl;
 
         // start measuring the time taken by the range delete
@@ -390,7 +390,7 @@ int runWorkload(EmuEnv* _env) {
 
       case 'Q':  // probe: point query
         workload_file >> key;
-        // if (_env->verbosity == 2) std::cout << instruction << " " << key <<
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key <<
         // "" << std::endl;
 
         // start measuring the time taken by the query
@@ -413,7 +413,7 @@ int runWorkload(EmuEnv* _env) {
 
       case 'S':  // scan: range query
         workload_file >> start_key >> end_key;
-        // std::cout << instruction << " " << start_key << " " << end_key << ""
+        // // std::cout << instruction << " " << start_key << " " << end_key << ""
         // << std::endl;
 
         // start measuring the time taken by the range query
@@ -422,7 +422,7 @@ int runWorkload(EmuEnv* _env) {
         it->Refresh();
         assert(it->status().ok());
         for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
-          // std::cout << "found key = " << it->key().ToString() << std::endl;
+          // // std::cout << "found key = " << it->key().ToString() << std::endl;
           if (it->key().ToString() == std::to_string(end_key)) {
             break;
           }
@@ -463,25 +463,25 @@ int runWorkload(EmuEnv* _env) {
   // and printing the results
   end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
-  std::cout
-      << "\n----------------------Workload Complete-----------------------"
-      << std::endl;
-  std::cout << "Total time taken by workload = " << elapsed_seconds.count()
-            << " seconds" << std::endl;
-  std::cout << "Total time taken by inserts = "
-            << total_insert_time_elapsed.count() << " seconds" << std::endl;
-  std::cout << "Total time taken by queries = "
-            << total_query_time_elapsed.count() << " seconds" << std::endl;
-  std::cout << "Total time taken by updates = "
-            << total_update_time_elapsed.count() << " seconds" << std::endl;
-  std::cout << "Total time taken by deletes = "
-            << total_delete_time_elapsed.count() << " seconds" << std::endl;
-  std::cout << "Total time taken by range deletes = "
-            << total_range_delete_time_elapsed.count() << " seconds"
-            << std::endl;
-  std::cout << "Total time taken by range queries = "
-            << total_range_query_time_elapsed.count() << " seconds"
-            << std::endl;
+  // std::cout
+  //     << "\n----------------------Workload Complete-----------------------"
+  //     << std::endl;
+  // std::cout << "Total time taken by workload = " << elapsed_seconds.count()
+  //           << " seconds" << std::endl;
+  // std::cout << "Total time taken by inserts = "
+  //           << total_insert_time_elapsed.count() << " seconds" << std::endl;
+  // std::cout << "Total time taken by queries = "
+  //           << total_query_time_elapsed.count() << " seconds" << std::endl;
+  // std::cout << "Total time taken by updates = "
+  //           << total_update_time_elapsed.count() << " seconds" << std::endl;
+  // std::cout << "Total time taken by deletes = "
+  //           << total_delete_time_elapsed.count() << " seconds" << std::endl;
+  // std::cout << "Total time taken by range deletes = "
+  //           << total_range_delete_time_elapsed.count() << " seconds"
+  //           << std::endl;
+  // std::cout << "Total time taken by range queries = "
+  //           << total_range_query_time_elapsed.count() << " seconds"
+  //           << std::endl;
 
   workload_file.close();
 
@@ -497,15 +497,15 @@ int runWorkload(EmuEnv* _env) {
   assert(s.ok());
   delete db;
   fade_stats->db_open = false;
-  std::cout << "\n----------------------Closing DB-----------------------"
-            << " completion_status = " << fade_stats->completion_status
-            << std::endl;
+  // std::cout << "\n----------------------Closing DB-----------------------"
+  //           << " completion_status = " << fade_stats->completion_status
+  //           << std::endl;
 
   // sleep(5);
 
   // reopening (and closing the DB to flush LOG to .sst file)
   // _env->compaction_pri = kMinOverlappingRatio;
-  // std::cout << "Re-opening DB -- Re-setting compaction style to: "
+  // // std::cout << "Re-opening DB -- Re-setting compaction style to: "
   //           << _env->compaction_pri << "\n";
   // s = DB::Open(options, kDBPath, &db);
   // fade_stats->db_open = true;
@@ -515,7 +515,7 @@ int runWorkload(EmuEnv* _env) {
   // if (!s.ok()) std::cerr << s.ToString() << std::endl;
   // assert(s.ok());
 
-  std::cout << "End of experiment - TEST !!\n";
+  // std::cout << "End of experiment - TEST !!\n";
 
   std::ofstream flush_stats_file("flush_stats.csv");
   flush_stats_file << "TimePoint,NumEntries,DataSize,IndexSize,FilterSize"
@@ -593,19 +593,19 @@ int runWorkload(EmuEnv* _env) {
   if (_env->enable_rocksdb_perf_iostat == 1) {  // !YBS-feb15-XXI!
     // sleep(5);
     rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
-    std::cout << "RocksDB Perf Context : " << std::endl;
-    std::cout << rocksdb::get_perf_context()->ToString() << std::endl;
-    std::cout << "RocksDB Iostats Context : " << std::endl;
-    std::cout << rocksdb::get_iostats_context()->ToString() << std::endl;
+    // std::cout << "RocksDB Perf Context : " << std::endl;
+    // std::cout << rocksdb::get_perf_context()->ToString() << std::endl;
+    // std::cout << "RocksDB Iostats Context : " << std::endl;
+    // std::cout << rocksdb::get_iostats_context()->ToString() << std::endl;
     // END ROCKS PROFILE
     // Print Full RocksDB stats
-    std::cout << "RocksDB Statistics : " << std::endl;
-    std::cout << options.statistics->ToString() << std::endl;
-    std::cout << "----------------------------------------" << std::endl;
+    // std::cout << "RocksDB Statistics : " << std::endl;
+    // std::cout << options.statistics->ToString() << std::endl;
+    // std::cout << "----------------------------------------" << std::endl;
     // std::string tr_mem;
     // db->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem);
     // // Print Full RocksDB stats
-    // std::cout << "RocksDB Estimated Table Readers Memory (index, filters) : "
+    // // std::cout << "RocksDB Estimated Table Readers Memory (index, filters) : "
     // << tr_mem << std::endl;
   }
   // !END
@@ -619,89 +619,93 @@ int runWorkload(EmuEnv* _env) {
 void printExperimentalSetup(EmuEnv* _env) {
   int l = 10;
 
-  std::cout << std::setfill(' ') << std::setw(l)
-            << "cmpt_sty"  // !YBS-sep07-XX!
-            << std::setfill(' ') << std::setw(l) << "cmpt_pri"
-            << std::setfill(' ') << std::setw(4) << "T" << std::setfill(' ')
-            << std::setw(l) << "P" << std::setfill(' ') << std::setw(l) << "B"
-            << std::setfill(' ') << std::setw(l) << "E" << std::setfill(' ')
-            << std::setw(l)
-            << "M"
-            // << std::setfill(' ') << std::setw(l)  << "f"
-            << std::setfill(' ') << std::setw(l) << "file_size"
-            << std::setfill(' ') << std::setw(l) << "L1_size"
-            << std::setfill(' ') << std::setw(l) << "blk_cch"  // !YBS-sep09-XX!
-            << std::setfill(' ') << std::setw(l) << "BPK"
-            << "\n";
-  std::cout << std::setfill(' ') << std::setw(l)
-            << _env->compaction_style;  // !YBS-sep07-XX!
-  std::cout << std::setfill(' ') << std::setw(l) << _env->compaction_pri;
-  std::cout << std::setfill(' ') << std::setw(4) << _env->size_ratio;
-  std::cout << std::setfill(' ') << std::setw(l) << _env->buffer_size_in_pages;
-  std::cout << std::setfill(' ') << std::setw(l) << _env->entries_per_page;
-  std::cout << std::setfill(' ') << std::setw(l) << _env->entry_size;
-  std::cout << std::setfill(' ') << std::setw(l) << _env->buffer_size;
-  // std::cout << std::setfill(' ') << std::setw(l) <<
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << "cmpt_sty"  // !YBS-sep07-XX!
+  //           << std::setfill(' ') << std::setw(l) << "cmpt_pri"
+  //           << std::setfill(' ') << std::setw(4) << "T" << std::setfill(' ')
+  //           << std::setw(l) << "P" << std::setfill(' ') << std::setw(l) << "B"
+  //           << std::setfill(' ') << std::setw(l) << "E" << std::setfill(' ')
+  //           << std::setw(l)
+  //           << "M"
+  //           << std::setfill(' ') << std::setw(l)  << "f"
+  //           << std::setfill(' ') << std::setw(l) << "file_size"
+  //           << std::setfill(' ') << std::setw(l) << "L1_size"
+  //           << std::setfill(' ') << std::setw(l) << "blk_cch"  // !YBS-sep09-XX!
+  //           << std::setfill(' ') << std::setw(l) << "BPK"
+  //           << "\n";
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << _env->compaction_style;  // !YBS-sep07-XX!
+
+
+
+
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->compaction_pri;
+  // std::cout << std::setfill(' ') << std::setw(4) << _env->size_ratio;
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->buffer_size_in_pages;
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->entries_per_page;
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->entry_size;
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->buffer_size;
+  // // std::cout << std::setfill(' ') << std::setw(l) <<
   // _env->file_to_memtable_size_ratio;
-  std::cout << std::setfill(' ') << std::setw(l) << _env->file_size;
-  std::cout << std::setfill(' ') << std::setw(l)
-            << _env->max_bytes_for_level_base;
-  std::cout << std::setfill(' ') << std::setw(l)
-            << _env->block_cache;  // !YBS-sep09-XX!
-  std::cout << std::setfill(' ') << std::setw(l) << _env->bits_per_key;
-  // std::cout << std::setfill(' ') << std::setw(l) <<
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->file_size;
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << _env->max_bytes_for_level_base;
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << _env->block_cache;  // !YBS-sep09-XX!
+  // std::cout << std::setfill(' ') << std::setw(l) << _env->bits_per_key;
+  // // std::cout << std::setfill(' ') << std::setw(l) <<
   // _env->delete_persistence_latency; // !YBS-feb15-XXI!
 
-  std::cout << std::endl;
+  // std::cout << std::endl;
 }
 
 void printWorkloadStatistics(operation_tracker op_track) {
   int l = 10;
 
-  std::cout << std::setfill(' ') << std::setfill(' ') << std::setw(l) << "#I"
-            << std::setfill(' ') << std::setw(l) << "#U" << std::setfill(' ')
-            << std::setw(l) << "#PD" << std::setfill(' ') << std::setw(l)
-            << "#RD" << std::setfill(' ') << std::setw(l) << "#PQ"
-            << std::setfill(' ') << std::setw(l) << "#RQ"
-            << "\n";
+  // std::cout << std::setfill(' ') << std::setfill(' ') << std::setw(l) << "#I"
+  //           << std::setfill(' ') << std::setw(l) << "#U" << std::setfill(' ')
+  //           << std::setw(l) << "#PD" << std::setfill(' ') << std::setw(l)
+  //           << "#RD" << std::setfill(' ') << std::setw(l) << "#PQ"
+  //           << std::setfill(' ') << std::setw(l) << "#RQ"
+  //           << "\n";
 
-  std::cout << std::setfill(' ') << std::setw(l) << op_track._inserts_completed;
-  std::cout << std::setfill(' ') << std::setw(l) << op_track._updates_completed;
-  std::cout << std::setfill(' ') << std::setw(l)
-            << op_track._point_deletes_completed;
-  std::cout << std::setfill(' ') << std::setw(l)
-            << op_track._range_deletes_completed;
-  std::cout << std::setfill(' ') << std::setw(l)
-            << op_track._point_queries_completed;
-  std::cout << std::setfill(' ') << std::setw(l)
-            << op_track._range_queries_completed;
+  // std::cout << std::setfill(' ') << std::setw(l) << op_track._inserts_completed;
+  // std::cout << std::setfill(' ') << std::setw(l) << op_track._updates_completed;
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << op_track._point_deletes_completed;
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << op_track._range_deletes_completed;
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << op_track._point_queries_completed;
+  // std::cout << std::setfill(' ') << std::setw(l)
+  //           << op_track._range_queries_completed;
 
-  std::cout << std::endl;
+  // std::cout << std::endl;
 }
 // !END
 
 inline void showProgress(const uint32_t& workload_size,
                          const uint32_t& counter) {
-  // std::cout << "flag = " << flag << std::endl;
+  // // std::cout << "flag = " << flag << std::endl;
   // std::cout<<"2----";
 
   if (counter / (workload_size / 100) >= 1) {
     for (int i = 0; i < 104; i++) {
-      std::cout << "\b";
+      // std::cout << "\b";
       fflush(stdout);
     }
   }
   for (int i = 0; i < counter / (workload_size / 100); i++) {
-    std::cout << "=";
+    // std::cout << "=";
     fflush(stdout);
   }
-  std::cout << std::setfill(' ')
-            << std::setw(101 - counter / (workload_size / 100));
-  std::cout << counter * 100 / workload_size << "%";
+  // std::cout << std::setfill(' ')
+  //           << std::setw(101 - counter / (workload_size / 100));
+  // std::cout << counter * 100 / workload_size << "%";
   fflush(stdout);
 
   if (counter == workload_size) {
-    std::cout << "\n";
+    // std::cout << "\n";
     return;
   }
 }

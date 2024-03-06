@@ -9,6 +9,13 @@
 #include <type_traits>
 #include <unordered_set>
 
+#define PROFILE
+
+#ifdef PROFILE
+#include <chrono>
+#include <iostream>
+#endif  // PROFILE
+
 #include "db/memtable.h"
 #include "memory/arena.h"
 #include "memtable/stl_wrappers.h"
@@ -105,10 +112,22 @@ class VectorRep : public MemTableRep {
 };
 
 void VectorRep::Insert(KeyHandle handle) {
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   auto* key = static_cast<char*>(handle);
   WriteLock l(&rwlock_);
   assert(!immutable_);
   bucket_->push_back(key);
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "InsertTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 // Returns true iff an entry that compares equal to key is in the collection.
@@ -150,6 +169,9 @@ VectorRep::Iterator::Iterator(class VectorRep* vrep,
 
 void VectorRep::Iterator::DoSort() const {
   // vrep is non-null means that we are working on an immutable memtable
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   if (!sorted_ && vrep_ != nullptr) {
     WriteLock l(&vrep_->rwlock_);
     if (!vrep_->sorted_) {
@@ -168,6 +190,15 @@ void VectorRep::Iterator::DoSort() const {
   }
   assert(sorted_);
   assert(vrep_ == nullptr || vrep_->sorted_);
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "SortingTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 // Returns true iff the iterator is positioned at a valid node.
@@ -246,6 +277,9 @@ void VectorRep::Iterator::SeekToLast() {
 
 void VectorRep::Get(const LookupKey& k, void* callback_args,
                     bool (*callback_func)(void* arg, const char* entry)) {
+#ifdef PROFILE
+  auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
   rwlock_.ReadLock();
   VectorRep* vector_rep;
   std::shared_ptr<Bucket> bucket;
@@ -261,6 +295,15 @@ void VectorRep::Get(const LookupKey& k, void* callback_args,
   for (iter.Seek(k.user_key(), k.memtable_key().data());
        iter.Valid() && callback_func(callback_args, iter.key()); iter.Next()) {
   }
+#ifdef PROFILE
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::cout << "PointQueryTime: "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+                                                                     start_time)
+                   .count()
+            << std::endl
+            << std::flush;
+#endif  // PROFILE
 }
 
 MemTableRep::Iterator* VectorRep::GetIterator(Arena* arena) {
