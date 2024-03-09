@@ -603,12 +603,23 @@ void generate_workload() {
                 // for (int i = 0; i < insert_pool.size(); ++i)
                 //     std::cout << insert_pool[i] << ' ';
                 // std::cout << std::endl;
+                std::vector<string> new_insert_pool;
+
                 if(!sorted){
                     sort(insert_pool.begin(), insert_pool.end()); 
 	                //sorted = true; //if the number of range queries increases by a lot, this might be a problem in terms of execution speed!!!
+                    for (int i = 0; i < insert_pool.size(); i++) {
+                        new_insert_pool.push_back(std::to_string(insert_pool[i].key_int32_));
+                    }
+                    sort(new_insert_pool.begin(), new_insert_pool.end());
                 }
+
                 Key start_key = insert_pool[start_index];
                 Key end_key = insert_pool[end_index];
+
+
+                start_key = new_insert_pool[start_index];
+                end_key = new_insert_pool[end_index];
 
                 // std::cout << "After sorting and before range deleting = ";
                 // for (int i = 0; i < insert_pool.size(); ++i)

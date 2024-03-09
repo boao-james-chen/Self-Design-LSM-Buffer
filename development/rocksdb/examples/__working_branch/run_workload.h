@@ -199,9 +199,9 @@ int runWorkload(EmuEnv* _env) {
 
   printExperimentalSetup(_env);  // !YBS-sep07-XX!
   // std::cout << "Maximum #OpenFiles = " << options.max_open_files
-            // << std::endl;  // !YBS-sep07-XX!
+  // << std::endl;  // !YBS-sep07-XX!
   // std::cout << "Maximum #ThreadsUsedToOpenFiles = "
-            // << options.max_file_opening_threads << std::endl;  // !YBS-sep07-XX!
+  // << options.max_file_opening_threads << std::endl;  // !YBS-sep07-XX!
   Status s = DB::Open(options, kDBPath, &db);
   if (!s.ok()) std::cerr << s.ToString() << std::endl;
   assert(s.ok());
@@ -239,7 +239,8 @@ int runWorkload(EmuEnv* _env) {
     // end perf/iostat code
   }
   // if (options.compaction_style == kCompactionStyleUniversal)
-  //   // std::cout << "Compaction Eagerness: Tiering (kCompactionStyleUniversal)"
+  //   // std::cout << "Compaction Eagerness: Tiering
+  //   (kCompactionStyleUniversal)"
   //             << std::endl;
   // else if (_env->compaction_pri == 9)  // !YBS-apr15-XXI!
   //   // std::cout << "Compaction Eagerness: 1-Leveling (variation of "
@@ -255,7 +256,7 @@ int runWorkload(EmuEnv* _env) {
   workload_file.open("workload.txt");
   assert(workload_file);
 
-  Iterator* it = db->NewIterator(r_options);  // for range reads
+  Iterator* it; // = db->NewIterator(r_options);  // for range reads
   uint32_t counter = 0;                       // for progress bar
 
   for (int i = 0; i < 20; ++i) {
@@ -269,10 +270,12 @@ int runWorkload(EmuEnv* _env) {
   // !END
   // !YBS-apr15-XXI!
   // if (_env->compaction_pri == 9) {
-    _env->level0_file_num_compaction_trigger = 1;
-    _env->level0_stop_writes_trigger = 1;
-  //   // std::cout << "Compaction style = 1-Leveling :: Overloading level0_file_num_compaction_trigger to " <<
-  //   _env->level0_file_num_compaction_trigger; // std::cout << "Compaction style = 1-Leveling :: Overloading level0_stop_writes_trigger to " <<
+  _env->level0_file_num_compaction_trigger = 1;
+  _env->level0_stop_writes_trigger = 1;
+  //   // std::cout << "Compaction style = 1-Leveling :: Overloading
+  //   level0_file_num_compaction_trigger to " <<
+  //   _env->level0_file_num_compaction_trigger; // std::cout << "Compaction
+  //   style = 1-Leveling :: Overloading level0_stop_writes_trigger to " <<
   //   _env->level0_stop_writes_trigger;
   // }
   // !END
@@ -308,8 +311,8 @@ int runWorkload(EmuEnv* _env) {
     switch (instruction) {
       case 'I':  // insert
         workload_file >> key >> value;
-        // if (_env->verbosity == 2) // std::cout << instruction << " " << key << "
-        // " << value << "" << std::endl;
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key
+        // << " " << value << "" << std::endl;
 
         // start measuring the time taken by the insert
         insert_start = std::chrono::high_resolution_clock::now();
@@ -330,8 +333,8 @@ int runWorkload(EmuEnv* _env) {
 
       case 'U':  // update
         workload_file >> key >> value;
-        // if (_env->verbosity == 2) // std::cout << instruction << " " << key << "
-        // " << value << "" << std::endl;
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key
+        // << " " << value << "" << std::endl;
 
         // start measuring the time taken by the update
         update_start = std::chrono::high_resolution_clock::now();
@@ -350,7 +353,8 @@ int runWorkload(EmuEnv* _env) {
 
       case 'D':  // point delete
         workload_file >> key;
-        // if (_env->verbosity == 2) // std::cout << instruction << " " << key <<
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key
+        // <<
         // "" << std::endl;
 
         // start measuring the time taken by the delete
@@ -390,22 +394,22 @@ int runWorkload(EmuEnv* _env) {
 
       case 'Q':  // probe: point query
         workload_file >> key;
-        // if (_env->verbosity == 2) // std::cout << instruction << " " << key <<
+        // if (_env->verbosity == 2) // std::cout << instruction << " " << key
+        // <<
         // "" << std::endl;
 
         // start measuring the time taken by the query
         query_start = std::chrono::high_resolution_clock::now();
 
         s = db->Get(r_options, std::to_string(key), &value);
-        // if (!s.ok()) std::cerr << s.ToString() << "key = " << key <<
-        // std::endl;
+        // if (!s.ok()) std::cerr << s.ToString() << "key = " << key << std::endl;
         //  assert(s.ok());
 
         // end measuring the time taken by the query
         query_end = std::chrono::high_resolution_clock::now();
         total_query_time_elapsed += query_end - query_start;
-        point_query_events_.push_back(PointQueryEvent{std::chrono::steady_clock::now(),
-                                             insert_end - insert_start});
+        point_query_events_.push_back(PointQueryEvent{
+            std::chrono::steady_clock::now(), insert_end - insert_start});
         op_track._point_queries_completed++;
         counter++;
         fade_stats->point_queries_completed++;
@@ -413,22 +417,40 @@ int runWorkload(EmuEnv* _env) {
 
       case 'S':  // scan: range query
         workload_file >> start_key >> end_key;
-        // // std::cout << instruction << " " << start_key << " " << end_key << ""
+        // // std::cout << instruction << " " << start_key << " " << end_key <<
+        // ""
         // << std::endl;
 
         // start measuring the time taken by the range query
         range_query_start = std::chrono::high_resolution_clock::now();
 
-        it->Refresh();
-        assert(it->status().ok());
-        for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
-          // // std::cout << "found key = " << it->key().ToString() << std::endl;
-          if (it->key().ToString() == std::to_string(end_key)) {
-            break;
+        {
+#ifdef PROFILE
+          auto start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
+
+          it = db->NewIterator(r_options);
+          it->Refresh();
+          assert(it->status().ok());
+          for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
+            // std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
+            if (it->key().ToString() >= std::to_string(end_key)) {
+              break;
+            }
           }
-        }
-        if (!it->status().ok()) {
-          std::cerr << it->status().ToString() << std::endl;
+          if (!it->status().ok()) {
+            std::cerr << it->status().ToString() << std::endl;
+          }
+
+#ifdef PROFILE
+          auto end_time = std::chrono::high_resolution_clock::now();
+          std::cout << "RangeQueryTime: "
+                    << std::chrono::duration_cast<std::chrono::microseconds>(
+                           end_time - start_time)
+                           .count()
+                    << std::endl
+                    << std::flush;
+#endif  // PROFILE
         }
         // end measuring the time taken by the query
         range_query_end = std::chrono::high_resolution_clock::now();
@@ -552,18 +574,19 @@ int runWorkload(EmuEnv* _env) {
   for (int i = 0; i < point_query_events_.size(); i++) {
     auto element = point_query_events_[i];
     pq_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
-                              element.timestamp_ - start_time_point)
-                              .count()
-                       << "," << element.time_taken_.count() << std::endl;
+                         element.timestamp_ - start_time_point)
+                         .count()
+                  << "," << element.time_taken_.count() << std::endl;
   }
 
   pq_stats_file.close();
 
   std::ofstream compaction_stats_file("compaction_stats.csv");
-  compaction_stats_file << "TimePoint,NumInputFiles,NumOutputFile,NumEntriesInput,"
-                           "DataSizeInput,IndexSizeInput,FilterSizeInput,NumEntriesOutput,"
-                           "DataSizeOutput,IndexSizeOutput,FilterSizeOutput"
-                        << std::endl;
+  compaction_stats_file
+      << "TimePoint,NumInputFiles,NumOutputFile,NumEntriesInput,"
+         "DataSizeInput,IndexSizeInput,FilterSizeInput,NumEntriesOutput,"
+         "DataSizeOutput,IndexSizeOutput,FilterSizeOutput"
+      << std::endl;
 
   for (int i = 0; i < compaction_events_.size(); i++) {
     auto element = compaction_events_[i];
@@ -572,11 +595,14 @@ int runWorkload(EmuEnv* _env) {
                                  .count()
                           << "," << element.num_input_files_ << ","
                           << element.num_output_files_ << ","
-                          << element.num_entries_inp_ << "," << element.data_size_inp_
-                          << "," << element.index_size_inp_ << ","
-                          << element.filter_size_inp_ << "," << element.num_entries_out_
-                          << "," << element.data_size_out_ << "," << element.index_size_out_ 
-                          << "," << element.filter_size_out_ << std::endl;
+                          << element.num_entries_inp_ << ","
+                          << element.data_size_inp_ << ","
+                          << element.index_size_inp_ << ","
+                          << element.filter_size_inp_ << ","
+                          << element.num_entries_out_ << ","
+                          << element.data_size_out_ << ","
+                          << element.index_size_out_ << ","
+                          << element.filter_size_out_ << std::endl;
   }
 
   compaction_stats_file.close();
@@ -605,7 +631,8 @@ int runWorkload(EmuEnv* _env) {
     // std::string tr_mem;
     // db->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem);
     // // Print Full RocksDB stats
-    // // std::cout << "RocksDB Estimated Table Readers Memory (index, filters) : "
+    // // std::cout << "RocksDB Estimated Table Readers Memory (index, filters)
+    // : "
     // << tr_mem << std::endl;
   }
   // !END
@@ -623,28 +650,28 @@ void printExperimentalSetup(EmuEnv* _env) {
   //           << "cmpt_sty"  // !YBS-sep07-XX!
   //           << std::setfill(' ') << std::setw(l) << "cmpt_pri"
   //           << std::setfill(' ') << std::setw(4) << "T" << std::setfill(' ')
-  //           << std::setw(l) << "P" << std::setfill(' ') << std::setw(l) << "B"
+  //           << std::setw(l) << "P" << std::setfill(' ') << std::setw(l) <<
+  //           "B"
   //           << std::setfill(' ') << std::setw(l) << "E" << std::setfill(' ')
   //           << std::setw(l)
   //           << "M"
   //           << std::setfill(' ') << std::setw(l)  << "f"
   //           << std::setfill(' ') << std::setw(l) << "file_size"
   //           << std::setfill(' ') << std::setw(l) << "L1_size"
-  //           << std::setfill(' ') << std::setw(l) << "blk_cch"  // !YBS-sep09-XX!
+  //           << std::setfill(' ') << std::setw(l) << "blk_cch"  //
+  //           !YBS-sep09-XX!
   //           << std::setfill(' ') << std::setw(l) << "BPK"
   //           << "\n";
   // std::cout << std::setfill(' ') << std::setw(l)
   //           << _env->compaction_style;  // !YBS-sep07-XX!
 
-
-
-
   // std::cout << std::setfill(' ') << std::setw(l) << _env->compaction_pri;
   // std::cout << std::setfill(' ') << std::setw(4) << _env->size_ratio;
-  // std::cout << std::setfill(' ') << std::setw(l) << _env->buffer_size_in_pages;
-  // std::cout << std::setfill(' ') << std::setw(l) << _env->entries_per_page;
-  // std::cout << std::setfill(' ') << std::setw(l) << _env->entry_size;
-  // std::cout << std::setfill(' ') << std::setw(l) << _env->buffer_size;
+  // std::cout << std::setfill(' ') << std::setw(l) <<
+  // _env->buffer_size_in_pages; std::cout << std::setfill(' ') << std::setw(l)
+  // << _env->entries_per_page; std::cout << std::setfill(' ') << std::setw(l)
+  // << _env->entry_size; std::cout << std::setfill(' ') << std::setw(l) <<
+  // _env->buffer_size;
   // // std::cout << std::setfill(' ') << std::setw(l) <<
   // _env->file_to_memtable_size_ratio;
   // std::cout << std::setfill(' ') << std::setw(l) << _env->file_size;
@@ -669,9 +696,10 @@ void printWorkloadStatistics(operation_tracker op_track) {
   //           << std::setfill(' ') << std::setw(l) << "#RQ"
   //           << "\n";
 
-  // std::cout << std::setfill(' ') << std::setw(l) << op_track._inserts_completed;
-  // std::cout << std::setfill(' ') << std::setw(l) << op_track._updates_completed;
-  // std::cout << std::setfill(' ') << std::setw(l)
+  // std::cout << std::setfill(' ') << std::setw(l) <<
+  // op_track._inserts_completed; std::cout << std::setfill(' ') << std::setw(l)
+  // << op_track._updates_completed; std::cout << std::setfill(' ') <<
+  // std::setw(l)
   //           << op_track._point_deletes_completed;
   // std::cout << std::setfill(' ') << std::setw(l)
   //           << op_track._range_deletes_completed;
