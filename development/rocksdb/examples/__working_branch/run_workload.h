@@ -429,11 +429,12 @@ int runWorkload(EmuEnv* _env) {
           auto start_time = std::chrono::high_resolution_clock::now();
 #endif  // PROFILE
 
+          r_options.total_order_seek = true;
           it = db->NewIterator(r_options);
           it->Refresh();
           assert(it->status().ok());
           for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
-            // std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
+            std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
             if (it->key().ToString() >= std::to_string(end_key)) {
               break;
             }
@@ -441,6 +442,7 @@ int runWorkload(EmuEnv* _env) {
           if (!it->status().ok()) {
             std::cerr << it->status().ToString() << std::endl;
           }
+          r_options.total_order_seek = false;
 
 #ifdef PROFILE
           auto end_time = std::chrono::high_resolution_clock::now();

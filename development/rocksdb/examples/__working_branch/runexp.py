@@ -23,9 +23,9 @@ if len(sys.argv) > 1:
 # inserts = 190000
 inserts = 140000  # 000
 updates = 0
-range_queries = 0
-selectivity = 0
-point_queries = 1000
+range_queries = 0 # 200
+selectivity = 0 # 0.0001
+point_queries = 0 # 200
 
 # entry_sizes = [16, 32, 64, 128]
 # entries_per_page = [256, 128, 64, 32]
@@ -45,16 +45,21 @@ HASHLINKLIST = "hashlinklist"
 
 # refer into ./emu_environment.h
 memtable_factories = {
-    # SKIPLIST: 1,
+    SKIPLIST: 1,
     VECTOR: 2,
-    # HASHSKIPLIST: 3,
-    # HASHLINKLIST: 4,
+    HASHSKIPLIST: 3,
+    HASHLINKLIST: 4,
 }
 
-# # these are only applicable in HashSkipList & HashLinkList
+# these are only applicable in HashSkipList & HashLinkList
 prefix_lengths = [0, 2, 6, 8, 10, 12]
-# bucket_counts = [1, 1000, 5000, 8000, 10000] #, 100000]
-bucket_counts = [100000, 1000000]
+bucket_counts = [1, 100, 1000, 5000, 8000, 10000]
+
+
+## These are the default values for the experiments
+prefix_lengths = [int(sys.argv[1])]
+bucket_counts = [int(sys.argv[2])]
+
 
 ## ============================================================ ##
 ##                              END                             ##
@@ -129,12 +134,13 @@ if __name__ == "__main__":
 
     for entry_size, epp in zip(entry_sizes, entries_per_page):
 
-        exp_dir = Path.joinpath(CWD, f"experiments-PQ-{entry_size}")
+        exp_dir = Path.joinpath(CWD, f"experiments-RQ-TEST4-{selectivity}-{entry_size}")
 
         if not exp_dir.exists():
             print(f"Creating new experiments directory: {exp_dir}")
             exp_dir.mkdir()
 
+        print(f"Running experiments in director {exp_dir}")
         for memtable, moption in memtable_factories.items():
             for buffer_size_in_pages in buffer_sizes_in_pages:
                 for size_ratio in size_ratios:

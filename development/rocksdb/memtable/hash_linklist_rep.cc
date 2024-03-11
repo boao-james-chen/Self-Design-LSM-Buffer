@@ -596,15 +596,16 @@ void HashLinkListRep::Insert(KeyHandle handle) {
   Slice internal_key = GetLengthPrefixedSlice(x->key);
   auto transformed = GetPrefix(internal_key);
   auto& bucket = buckets_[GetHash(transformed)];
-#ifdef PROFILE
-  auto end_time = std::chrono::high_resolution_clock::now();
-  std::cout << "ComputeHashTime: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
-                                                                     start_time)
-                   .count()
-            << std::endl
-            << std::flush;
-#endif  // PROFILE
+  // std::cout << " Internal Key: " << internal_key.ToStringView() <<  " ===> Transformed: " << transformed.ToStringView() << " :::: Bucket: " << GetHash(transformed) << std::endl << std::flush;
+// #ifdef PROFILE
+//   auto end_time = std::chrono::high_resolution_clock::now();
+//   std::cout << "ComputeHashTime: "
+//             << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+//                                                                      start_time)
+//                    .count()
+//             << std::endl
+//             << std::flush;
+// #endif  // PROFILE
   Pointer* first_next_pointer =
       static_cast<Pointer*>(bucket.load(std::memory_order_relaxed));
 
@@ -652,7 +653,7 @@ void HashLinkListRep::Insert(KeyHandle handle) {
       skip_list_bucket_header->skip_list.Insert(x->key);
 #ifdef PROFILE
       auto iend_time = std::chrono::high_resolution_clock::now();
-      std::cout << "ConvertedToSkipList" << std::endl << std::flush;
+      // std::cout << "ConvertedToSkipList" << std::endl << std::flush;
       std::cout << "InsertTime: "
                 << std::chrono::duration_cast<std::chrono::microseconds>(
                        iend_time - start_time)

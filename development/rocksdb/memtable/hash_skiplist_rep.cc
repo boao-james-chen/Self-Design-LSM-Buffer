@@ -278,15 +278,16 @@ void HashSkipListRep::Insert(KeyHandle handle) {
   assert(!Contains(key));
   auto transformed = transform_->Transform(UserKey(key));
   auto bucket = GetInitializedBucket(transformed);
-#ifdef PROFILE
-  auto end_time = std::chrono::high_resolution_clock::now();
-  std::cout << "ComputeHashTime: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
-                                                                     start_time)
-                   .count()
-            << std::endl
-            << std::flush;
-#endif  // PROFILE
+  // std::cout << " User Key: " << UserKey(key).ToStringView() << " ===> Transformed: " << transformed.ToStringView() << " :::: Bucket: " << bucket << std::endl << std::flush;
+// #ifdef PROFILE
+//   auto end_time = std::chrono::high_resolution_clock::now();
+//   std::cout << "ComputeHashTime: "
+//             << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+//                                                                      start_time)
+//                    .count()
+//             << std::endl
+//             << std::flush;
+// #endif  // PROFILE
   bucket->Insert(key);
 #ifdef PROFILE
   auto iend_time = std::chrono::high_resolution_clock::now();
