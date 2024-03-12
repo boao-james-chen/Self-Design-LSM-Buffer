@@ -653,7 +653,6 @@ void HashLinkListRep::Insert(KeyHandle handle) {
       skip_list_bucket_header->skip_list.Insert(x->key);
 #ifdef PROFILE
       auto iend_time = std::chrono::high_resolution_clock::now();
-      // std::cout << "ConvertedToSkipList" << std::endl << std::flush;
       std::cout << "InsertTime: "
                 << std::chrono::duration_cast<std::chrono::microseconds>(
                        iend_time - start_time)
@@ -681,7 +680,6 @@ void HashLinkListRep::Insert(KeyHandle handle) {
     // try and set larger values of the threshold and see what happens
     //  Case 3. number of entries reaches the threshold so need to convert to
     //  skip list.
-    // std::cout<<"Inside case 3"<<std::endl;
     LinkListIterator bucket_iter(
         this, reinterpret_cast<Node*>(
                   first_next_pointer->load(std::memory_order_relaxed)));

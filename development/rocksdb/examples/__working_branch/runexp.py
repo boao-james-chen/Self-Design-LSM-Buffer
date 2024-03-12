@@ -23,8 +23,8 @@ if len(sys.argv) > 1:
 # inserts = 190000
 inserts = 140000  # 000
 updates = 0
-range_queries = 0 # 200
-selectivity = 0 # 0.0001
+range_queries = 200
+selectivity = 0.8
 point_queries = 0 # 200
 
 # entry_sizes = [16, 32, 64, 128]
@@ -77,8 +77,8 @@ def separator(func):
 
 def cleanup(dirpath: Path):
     workload_file = Path.joinpath(dirpath, "workload.txt")
-    # db_working_home = Path.joinpath(dirpath, "db_working_home")
-    # shutil.rmtree(db_working_home)
+    db_working_home = Path.joinpath(dirpath, "db_working_home")
+    shutil.rmtree(db_working_home)
     workload_file.unlink()
 
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     for entry_size, epp in zip(entry_sizes, entries_per_page):
 
-        exp_dir = Path.joinpath(CWD, f"experiments-RQ-TEST4-{selectivity}-{entry_size}")
+        exp_dir = Path.joinpath(CWD, f"experiments-RQ-{selectivity}-{entry_size}")
 
         if not exp_dir.exists():
             print(f"Creating new experiments directory: {exp_dir}")

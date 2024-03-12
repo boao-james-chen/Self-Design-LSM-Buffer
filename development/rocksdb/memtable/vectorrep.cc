@@ -169,9 +169,9 @@ VectorRep::Iterator::Iterator(class VectorRep* vrep,
 
 void VectorRep::Iterator::DoSort() const {
   // vrep is non-null means that we are working on an immutable memtable
-#ifdef PROFILE
-  auto start_time = std::chrono::high_resolution_clock::now();
-#endif  // PROFILE
+// #ifdef PROFILE
+//   auto start_time = std::chrono::high_resolution_clock::now();
+// #endif  // PROFILE
   if (!sorted_ && vrep_ != nullptr) {
     WriteLock l(&vrep_->rwlock_);
     if (!vrep_->sorted_) {
@@ -190,15 +190,15 @@ void VectorRep::Iterator::DoSort() const {
   }
   assert(sorted_);
   assert(vrep_ == nullptr || vrep_->sorted_);
-#ifdef PROFILE
-  auto end_time = std::chrono::high_resolution_clock::now();
-  std::cout << "SortingTime: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
-                                                                     start_time)
-                   .count()
-            << std::endl
-            << std::flush;
-#endif  // PROFILE
+// #ifdef PROFILE
+//   auto end_time = std::chrono::high_resolution_clock::now();
+//   std::cout << "SortingTime: "
+//             << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+//                                                                      start_time)
+//                    .count()
+//             << std::endl
+//             << std::flush;
+// #endif  // PROFILE
 }
 
 // Returns true iff the iterator is positioned at a valid node.
