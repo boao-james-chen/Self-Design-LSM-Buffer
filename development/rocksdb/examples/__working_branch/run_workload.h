@@ -434,9 +434,9 @@ int runWorkload(EmuEnv* _env) {
           it->Refresh();
           assert(it->status().ok());
           for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
-            std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
             if (it->key().ToString() >= std::to_string(end_key)) {
               break;
+            std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
             }
           }
           if (!it->status().ok()) {
