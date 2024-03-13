@@ -621,15 +621,15 @@ int runWorkload(EmuEnv* _env) {
   if (_env->enable_rocksdb_perf_iostat == 1) {  // !YBS-feb15-XXI!
     // sleep(5);
     rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
-    // std::cout << "RocksDB Perf Context : " << std::endl;
-    // std::cout << rocksdb::get_perf_context()->ToString() << std::endl;
-    // std::cout << "RocksDB Iostats Context : " << std::endl;
-    // std::cout << rocksdb::get_iostats_context()->ToString() << std::endl;
+    std::cout << "RocksDB Perf Context : " << std::endl;
+    std::cout << rocksdb::get_perf_context()->ToString() << std::endl;
+    std::cout << "RocksDB Iostats Context : " << std::endl;
+    std::cout << rocksdb::get_iostats_context()->ToString() << std::endl;
     // END ROCKS PROFILE
     // Print Full RocksDB stats
-    // std::cout << "RocksDB Statistics : " << std::endl;
-    // std::cout << options.statistics->ToString() << std::endl;
-    // std::cout << "----------------------------------------" << std::endl;
+    std::cout << "RocksDB Statistics : " << std::endl;
+    std::cout << options.statistics->ToString() << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
     // std::string tr_mem;
     // db->GetProperty("rocksdb.estimate-table-readers-mem", &tr_mem);
     // // Print Full RocksDB stats

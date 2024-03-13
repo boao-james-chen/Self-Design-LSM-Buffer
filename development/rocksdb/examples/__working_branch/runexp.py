@@ -24,7 +24,7 @@ if len(sys.argv) > 1:
 inserts = 140000  # 000
 updates = 0
 range_queries = 200
-selectivity = 0.8
+selectivities = [0.1, 0.2, 0.4, 0.6]
 point_queries = 200 # 200
 
 # entry_sizes = [16, 32, 64, 128]
@@ -58,7 +58,8 @@ prefix_lengths = [0, 2, 6, 8, 10, 12]
 
 ## These are the default values for the experiments
 prefix_lengths = [2, 4, 6, 8, 10]
-bucket_counts = [100, 1000, 5000, 10000, 65536, 100000]
+bucket_counts = [100, 1000, 5000, 10000, 25000, 65536, 100000]
+# bucket_counts = [25000]
 
 
 ## ============================================================ ##
@@ -132,36 +133,36 @@ def run_worklaod(dirname, args, args_dict, exp_dir):
 if __name__ == "__main__":
     size_ratios = [4]
 
-    for entry_size, epp in zip(entry_sizes, entries_per_page):
+    for selectivity in selectivities:
+        for entry_size, epp in zip(entry_sizes, entries_per_page):
+            exp_dir = Path.joinpath(CWD, f"experiments-MOTIVATION-{selectivity}-{entry_size}")
 
-        exp_dir = Path.joinpath(CWD, f"experiments-MOTIVATION-{selectivity}-{entry_size}")
+            if not exp_dir.exists():
+                print(f"Creating new experiments directory: {exp_dir}")
+                exp_dir.mkdir()
 
-        if not exp_dir.exists():
-            print(f"Creating new experiments directory: {exp_dir}")
-            exp_dir.mkdir()
+            print(f"Running experiments in director {exp_dir}")
+            for memtable, moption in memtable_factories.items():
+                for buffer_size_in_pages in buffer_sizes_in_pages:
+                    for size_ratio in size_ratios:
+                        args_dict = {
+                            "inserts": inserts,
+                            "updates": updates,
+                            "range_queries": range_queries,
+                            "selectivity": selectivity,
+                            "point_queries": point_queries,
+                            "entry_size": entry_size,
+                        }
+                        dirname = f"I {inserts} U {updates} S {range_queries} Y {selectivity} Q {point_queries} m {memtable} E {entry_size} B {epp} P {buffer_size_in_pages} T {size_ratio}"
+                        args = f"-m {moption} -E {entry_size} -B {epp} -P {buffer_size_in_pages} -T {size_ratio}"
 
-        print(f"Running experiments in director {exp_dir}")
-        for memtable, moption in memtable_factories.items():
-            for buffer_size_in_pages in buffer_sizes_in_pages:
-                for size_ratio in size_ratios:
-                    args_dict = {
-                        "inserts": inserts,
-                        "updates": updates,
-                        "range_queries": range_queries,
-                        "selectivity": selectivity,
-                        "point_queries": point_queries,
-                        "entry_size": entry_size,
-                    }
-                    dirname = f"I {inserts} U {updates} S {range_queries} Y {selectivity} Q {point_queries} m {memtable} E {entry_size} B {epp} P {buffer_size_in_pages} T {size_ratio}"
-                    args = f"-m {moption} -E {entry_size} -B {epp} -P {buffer_size_in_pages} -T {size_ratio}"
-
-                    if memtable in [SKIPLIST, VECTOR]:
-                        run_worklaod(dirname, args, args_dict, exp_dir)
-                    else:
-                        for prefix_len in prefix_lengths:
-                            for bucket_count in bucket_counts:
-                                run_worklaod(
-                                    f"{dirname} l {prefix_len} bucket_count {bucket_count}",
-                                    f"{args} -l {prefix_len} --bucket_count {bucket_count} --threshold_use_skiplist {2 * inserts}",
-                                    args_dict, exp_dir
-                                )
+                        if memtable in [SKIPLIST, VECTOR]:
+                            run_worklaod(dirname, args, args_dict, exp_dir)
+                        else:
+                            for prefix_len in prefix_lengths:
+                                for bucket_count in bucket_counts:
+                                    run_worklaod(
+                                        f"{dirname} l {prefix_len} bucket_count {bucket_count}",
+                                        f"{args} -l {prefix_len} --bucket_count {bucket_count} --threshold_use_skiplist {2 * inserts}",
+                                        args_dict, exp_dir
+                                    )
