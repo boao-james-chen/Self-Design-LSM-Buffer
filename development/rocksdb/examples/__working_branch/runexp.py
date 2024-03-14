@@ -23,9 +23,10 @@ if len(sys.argv) > 1:
 # inserts = 190000
 inserts = 140000  # 000
 updates = 0
-range_queries = 200
-selectivities = [0.1, 0.2, 0.4, 0.6]
-point_queries = 200 # 200
+range_queries = 0 # 200
+selectivities = 0 # [0.0001, 0.02, 0.08, 0.4, 0.8]  # [0.02, 0.06, 0.08, 0.1, 0.2, 0.4, 0.6]
+# selectivities = [0.4]
+point_queries = 0 # 200 # 200
 
 # entry_sizes = [16, 32, 64, 128]
 # entries_per_page = [256, 128, 64, 32]
@@ -52,13 +53,14 @@ memtable_factories = {
 }
 
 # these are only applicable in HashSkipList & HashLinkList
-prefix_lengths = [0, 2, 6, 8, 10, 12]
+prefix_lengths = [0, 2, 4, 6, 8, 10, 12]
 # bucket_counts = [1, 100, 1000, 5000, 8000, 10000]
 
 
 ## These are the default values for the experiments
-prefix_lengths = [2, 4, 6, 8, 10]
-bucket_counts = [100, 1000, 5000, 10000, 25000, 65536, 100000]
+prefix_lengths = [2]
+# bucket_counts = [100, 1000, 5000, 10000, 25000, 65536, 100000]
+bucket_counts = [65536]
 # bucket_counts = [25000]
 
 
@@ -135,7 +137,7 @@ if __name__ == "__main__":
 
     for selectivity in selectivities:
         for entry_size, epp in zip(entry_sizes, entries_per_page):
-            exp_dir = Path.joinpath(CWD, f"experiments-MOTIVATION-{selectivity}-{entry_size}")
+            exp_dir = Path.joinpath(CWD, f"experiments-MOTIVATION-sameprefix-{selectivity}-{entry_size}")
 
             if not exp_dir.exists():
                 print(f"Creating new experiments directory: {exp_dir}")
