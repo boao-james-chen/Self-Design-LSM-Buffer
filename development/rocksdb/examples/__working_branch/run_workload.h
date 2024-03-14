@@ -357,10 +357,27 @@ int runWorkload(EmuEnv* _env) {
         // start measuring the time taken by the update
         update_start = std::chrono::high_resolution_clock::now();
 
+        {
+#ifdef PROFILE
+          auto update_start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
+
         // Put key-value
         s = db->Put(w_options, std::to_string(key), value);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
         assert(s.ok());
+
+#ifdef PROFILE
+          auto update_end_time = std::chrono::high_resolution_clock::now();
+          std::cout << "UpdateQueryTime: "
+                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           update_end_time - update_start_time)
+                           .count()
+                    << std::endl
+                    << std::flush;
+#endif  // PROFILE
+        }
+
         // end measuring the time taken by the update
         update_end = std::chrono::high_resolution_clock::now();
         total_update_time_elapsed += update_end - update_start;
@@ -540,9 +557,9 @@ int runWorkload(EmuEnv* _env) {
   std::cout << "Total time taken by workload = " << elapsed_seconds.count()
             << " seconds" << std::endl;
   std::cout << "Total time taken by inserts = "
-            << total_insert_time_elapsed.count() << " ms" << std::endl;
+            << total_insert_time_elapsed.count() << " seconds" << std::endl;
   std::cout << "Total time taken by queries = "
-            << total_query_time_elapsed.count() << " ms" << std::endl;
+            << total_query_time_elapsed.count() << " seconds" << std::endl;
   std::cout << "Total time taken by updates = "
             << total_update_time_elapsed.count() << " seconds" << std::endl;
   std::cout << "Total time taken by deletes = "
