@@ -304,6 +304,8 @@ int runWorkload(EmuEnv* _env) {
 
 #ifdef PROFILE
           auto workload_start_time = std::chrono::high_resolution_clock::now();
+          unsigned long long inserts_time = 0;
+          unsigned long long point_queries_time = 0;
 #endif  // PROFILE
 
   while (!workload_file.eof()) {
@@ -322,12 +324,24 @@ int runWorkload(EmuEnv* _env) {
         insert_start = std::chrono::high_resolution_clock::now();
 
         // Put key-value
+{
+#ifdef PROFILE
+          auto inserts_start_time = std::chrono::high_resolution_clock::now();
+#endif // PROFILE
+
         s = db->Put(w_options, std::to_string(key), value);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
         assert(s.ok());
+
+#ifdef PROFILE
+          auto inserts_end_time = std::chrono::high_resolution_clock::now();
+          inserts_time += std::chrono::duration_cast<std::chrono::microseconds>(inserts_start_time - inserts_end_time).count();
+#endif // PROFILE
+}
+
         // end measuring the time taken by the insert
         insert_end = std::chrono::high_resolution_clock::now();
-        total_insert_time_elapsed += insert_end - insert_start;
+        total_insert_time_elapsed += std::chrono::duration_cast<std::chrono::microseconds>(insert_end - insert_start);
         insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
                                              insert_end - insert_start});
         op_track._inserts_completed++;
@@ -404,14 +418,24 @@ int runWorkload(EmuEnv* _env) {
 
         // start measuring the time taken by the query
         query_start = std::chrono::high_resolution_clock::now();
+{
+#ifdef PROFILE
+          auto pq_start_time = std::chrono::high_resolution_clock::now();
+#endif // PROFILE
 
         s = db->Get(r_options, std::to_string(key), &value);
         // if (!s.ok()) std::cerr << s.ToString() << "key = " << key << std::endl;
         //  assert(s.ok());
 
+#ifdef PROFILE
+          auto pq_end_time = std::chrono::high_resolution_clock::now();
+          point_queries_time += std::chrono::duration_cast<std::chrono::microseconds>(pq_start_time - pq_end_time).count();
+#endif // PROFILE
+}
+
         // end measuring the time taken by the query
         query_end = std::chrono::high_resolution_clock::now();
-        total_query_time_elapsed += query_end - query_start;
+        total_query_time_elapsed += std::chrono::duration_cast<std::chrono::microseconds>(query_end - query_start);
         point_query_events_.push_back(PointQueryEvent{
             std::chrono::steady_clock::now(), insert_end - insert_start});
         op_track._point_queries_completed++;
@@ -457,6 +481,7 @@ int runWorkload(EmuEnv* _env) {
                     << std::endl
                     << std::flush;
 #endif  // PROFILE
+
         }
         // end measuring the time taken by the query
         range_query_end = std::chrono::high_resolution_clock::now();
@@ -499,6 +524,14 @@ int runWorkload(EmuEnv* _env) {
                            .count() << " ns"
                     << std::endl
                     << std::flush;
+          // std::cout << "InsertsExecutionTime: "
+          //           << inserts_time
+          //           << std::endl
+          //           << std::flush;
+          // std::cout << "PQExecutionTime: "
+          //           << point_queries_time
+          //           << std::endl
+          //           << std::flush;
 #endif  // PROFILE
 
   std::cout

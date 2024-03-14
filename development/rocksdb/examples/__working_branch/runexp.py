@@ -20,11 +20,11 @@ if len(sys.argv) > 1:
 ## ============================================================ ##
 ## Also check arguments defined in __main__
 
-inserts = 1500000  # 000
+inserts = 150000  # 000
 updates = 0
 range_queries = 0 # 200
 selectivities = [0] # [0.0001, 0.02, 0.08, 0.4, 0.8]  # [0.02, 0.06, 0.08, 0.1, 0.2, 0.4, 0.6]
-point_queries = 0 # 200 # 200
+point_queries = 15000 # 200 # 200
 
 entry_sizes = [16, 32, 64]
 entries_per_page = [256, 128, 64]
