@@ -600,7 +600,7 @@ void HashLinkListRep::Insert(KeyHandle handle) {
 // #ifdef PROFILE
 //   auto end_time = std::chrono::high_resolution_clock::now();
 //   std::cout << "ComputeHashTime: "
-//             << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+//             << std::chrono::duration_cast<std::chrono::nanoseconds>(end_time -
 //                                                                      start_time)
 //                    .count()
 //             << std::endl
@@ -618,7 +618,7 @@ void HashLinkListRep::Insert(KeyHandle handle) {
 #ifdef PROFILE
     auto iend_time = std::chrono::high_resolution_clock::now();
     std::cout << "InsertTime: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(
+              << std::chrono::duration_cast<std::chrono::nanoseconds>(
                      iend_time - start_time)
                      .count()
               << std::endl
@@ -654,7 +654,7 @@ void HashLinkListRep::Insert(KeyHandle handle) {
 #ifdef PROFILE
       auto iend_time = std::chrono::high_resolution_clock::now();
       std::cout << "InsertTime: "
-                << std::chrono::duration_cast<std::chrono::microseconds>(
+                << std::chrono::duration_cast<std::chrono::nanoseconds>(
                        iend_time - start_time)
                        .count()
                 << std::endl
@@ -744,7 +744,7 @@ void HashLinkListRep::Insert(KeyHandle handle) {
 #ifdef PROFILE
   auto iend_time = std::chrono::high_resolution_clock::now();
   std::cout << "InsertTime: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(iend_time -
+            << std::chrono::duration_cast<std::chrono::nanoseconds>(iend_time -
                                                                      start_time)
                    .count()
             << std::endl
@@ -811,7 +811,7 @@ void HashLinkListRep::Get(const LookupKey& k, void* callback_args,
 #ifdef PROFILE
   auto end_time = std::chrono::high_resolution_clock::now();
   std::cout << "PointQueryTime: "
-            << std::chrono::duration_cast<std::chrono::microseconds>(end_time -
+            << std::chrono::duration_cast<std::chrono::nanoseconds>(end_time -
                                                                      start_time)
                    .count()
             << std::endl
