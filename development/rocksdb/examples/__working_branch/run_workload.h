@@ -302,6 +302,10 @@ int runWorkload(EmuEnv* _env) {
   std::chrono::duration<double> total_range_delete_time_elapsed(0);
   start = std::chrono::high_resolution_clock::now();
 
+#ifdef PROFILE
+          auto workload_start_time = std::chrono::high_resolution_clock::now();
+#endif  // PROFILE
+
   while (!workload_file.eof()) {
     char instruction;
     long key, start_key, end_key;
@@ -487,25 +491,35 @@ int runWorkload(EmuEnv* _env) {
   // and printing the results
   end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
-  // std::cout
-  //     << "\n----------------------Workload Complete-----------------------"
-  //     << std::endl;
-  // std::cout << "Total time taken by workload = " << elapsed_seconds.count()
-  //           << " seconds" << std::endl;
-  // std::cout << "Total time taken by inserts = "
-  //           << total_insert_time_elapsed.count() << " seconds" << std::endl;
-  // std::cout << "Total time taken by queries = "
-  //           << total_query_time_elapsed.count() << " seconds" << std::endl;
-  // std::cout << "Total time taken by updates = "
-  //           << total_update_time_elapsed.count() << " seconds" << std::endl;
-  // std::cout << "Total time taken by deletes = "
-  //           << total_delete_time_elapsed.count() << " seconds" << std::endl;
-  // std::cout << "Total time taken by range deletes = "
-  //           << total_range_delete_time_elapsed.count() << " seconds"
-  //           << std::endl;
-  // std::cout << "Total time taken by range queries = "
-  //           << total_range_query_time_elapsed.count() << " seconds"
-  //           << std::endl;
+#ifdef PROFILE
+          auto workload_end_time = std::chrono::high_resolution_clock::now();
+          std::cout << "WorkloadExecutionTime: "
+                    << std::chrono::duration_cast<std::chrono::microseconds>(
+                           workload_end_time - workload_start_time)
+                           .count()
+                    << std::endl
+                    << std::flush;
+#endif  // PROFILE
+
+  std::cout
+      << "\n----------------------Workload Complete-----------------------"
+      << std::endl;
+  std::cout << "Total time taken by workload = " << elapsed_seconds.count()
+            << " seconds" << std::endl;
+  std::cout << "Total time taken by inserts = "
+            << total_insert_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by queries = "
+            << total_query_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by updates = "
+            << total_update_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by deletes = "
+            << total_delete_time_elapsed.count() << " seconds" << std::endl;
+  std::cout << "Total time taken by range deletes = "
+            << total_range_delete_time_elapsed.count() << " seconds"
+            << std::endl;
+  std::cout << "Total time taken by range queries = "
+            << total_range_query_time_elapsed.count() << " seconds"
+            << std::endl;
 
   workload_file.close();
 
