@@ -281,7 +281,7 @@ int runWorkload(EmuEnv* _env) {
   // !END
 
   // time variables for measuring the time taken by the workload
-  std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
+  // std::chrono::nanoseconds start, end;
   std::chrono::time_point<std::chrono::high_resolution_clock> insert_start,
       insert_end;
   std::chrono::time_point<std::chrono::high_resolution_clock> query_start,
@@ -294,13 +294,13 @@ int runWorkload(EmuEnv* _env) {
       range_query_end;
   std::chrono::time_point<std::chrono::high_resolution_clock>
       range_delete_start, range_delete_end;
-  std::chrono::duration<double> total_insert_time_elapsed(0);
-  std::chrono::duration<double> total_query_time_elapsed(0);
-  std::chrono::duration<double> total_delete_time_elapsed(0);
-  std::chrono::duration<double> total_update_time_elapsed(0);
-  std::chrono::duration<double> total_range_query_time_elapsed(0);
-  std::chrono::duration<double> total_range_delete_time_elapsed(0);
-  start = std::chrono::high_resolution_clock::now();
+  std::chrono::nanoseconds total_insert_time_elapsed(0);
+  std::chrono::nanoseconds total_query_time_elapsed(0);
+  std::chrono::nanoseconds total_delete_time_elapsed(0);
+  std::chrono::nanoseconds total_update_time_elapsed(0);
+  std::chrono::nanoseconds total_range_query_time_elapsed(0);
+  std::chrono::nanoseconds total_range_delete_time_elapsed(0);
+  auto start = std::chrono::high_resolution_clock::now();
 
 #ifdef PROFILE
           auto workload_start_time = std::chrono::high_resolution_clock::now();
@@ -492,7 +492,7 @@ int runWorkload(EmuEnv* _env) {
 #ifdef PROFILE
           auto end_time = std::chrono::high_resolution_clock::now();
           std::cout << "RangeQueryTime: "
-                    << std::chrono::duration_cast<std::chrono::microseconds>(
+                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
                            end_time - start_time)
                            .count()
                     << std::endl
@@ -531,14 +531,14 @@ int runWorkload(EmuEnv* _env) {
 
   // end measuring the time taken by the workload
   // and printing the results
-  end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end - start;
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::nanoseconds elapsed_seconds = end - start;
 #ifdef PROFILE
           auto workload_end_time = std::chrono::high_resolution_clock::now();
           std::cout << "WorkloadExecutionTime: "
-                    << std::chrono::duration_cast<std::chrono::microseconds>(
+                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
                            workload_end_time - workload_start_time)
-                           .count()
+                           .count() << " ns"
                     << std::endl
                     << std::flush;
           // std::cout << "InsertsExecutionTime: "
@@ -555,20 +555,20 @@ int runWorkload(EmuEnv* _env) {
       << "\n----------------------Workload Complete-----------------------"
       << std::endl;
   std::cout << "Total time taken by workload = " << elapsed_seconds.count()
-            << " seconds" << std::endl;
+            << " ns" << std::endl;
   std::cout << "Total time taken by inserts = "
-            << total_insert_time_elapsed.count() << " seconds" << std::endl;
+            << total_insert_time_elapsed.count() << " ns" << std::endl;
   std::cout << "Total time taken by queries = "
-            << total_query_time_elapsed.count() << " seconds" << std::endl;
+            << total_query_time_elapsed.count() << " ns" << std::endl;
   std::cout << "Total time taken by updates = "
-            << total_update_time_elapsed.count() << " seconds" << std::endl;
+            << total_update_time_elapsed.count() << " ns" << std::endl;
   std::cout << "Total time taken by deletes = "
-            << total_delete_time_elapsed.count() << " seconds" << std::endl;
+            << total_delete_time_elapsed.count() << " ns" << std::endl;
   std::cout << "Total time taken by range deletes = "
-            << total_range_delete_time_elapsed.count() << " seconds"
+            << total_range_delete_time_elapsed.count() << " ns"
             << std::endl;
   std::cout << "Total time taken by range queries = "
-            << total_range_query_time_elapsed.count() << " seconds"
+            << total_range_query_time_elapsed.count() << " ns"
             << std::endl;
 
   workload_file.close();
