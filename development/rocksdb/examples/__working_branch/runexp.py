@@ -24,11 +24,13 @@ inserts = 120000  # 000
 updates = 0
 range_queries = 0 # 200
 selectivities = [0] # [0.0001, 0.02, 0.08, 0.4, 0.8]  # [0.02, 0.06, 0.08, 0.1, 0.2, 0.4, 0.6]
-point_queries = [120000] # [12, 120, 1200, 12000] # 200 # 200
+point_queries = 0 # 200 # 200
 
 entry_sizes = [64]  # [16, 32, 64]
 entries_per_page = [64]  #  [256, 128, 64]
 
+entry_sizes = [64]
+entries_per_page = [64]
 
 # buffer_sizes_in_pages = [128, 512, 2048, 4096]
 buffer_sizes_in_pages = [4096]
@@ -43,10 +45,10 @@ HASHLINKLIST = "hashlinklist"
 # refer into ./emu_environment.h
 
 memtable_factories = {
+    # SKIPLIST: 1,
     VECTOR: 2,
-    SKIPLIST: 1,
-    HASHSKIPLIST: 3,
-    HASHLINKLIST: 4,
+    # HASHSKIPLIST: 3,
+    # HASHLINKLIST: 4,
 }
 
 # these are only applicable in HashSkipList & HashLinkList
@@ -135,6 +137,9 @@ def run_worklaod(dirname, args, args_dict, exp_dir):
 if __name__ == "__main__":
     size_ratios = [4]
 
+    for selectivity in selectivities:
+        for entry_size, epp in zip(entry_sizes, entries_per_page):
+            exp_dir = Path.joinpath(CWD, f"experiments-Writes-Pre-{selectivity}-{entry_size}-{epp}")
     for pqratio in point_queries:
         for selectivity in selectivities:
             for entry_size, epp in zip(entry_sizes, entries_per_page):
