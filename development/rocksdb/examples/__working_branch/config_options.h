@@ -37,7 +37,7 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
       break;
     case 2:
       op->memtable_factory =
-          std::shared_ptr<VectorRepFactory>(new VectorRepFactory);
+          std::shared_ptr<VectorRepFactory>(new VectorRepFactory(20000000));
       break;
     case 3:
       op->memtable_factory.reset(NewHashSkipListRepFactory(

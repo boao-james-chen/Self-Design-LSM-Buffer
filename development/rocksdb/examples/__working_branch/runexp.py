@@ -29,6 +29,8 @@ point_queries = [0] # [240, 960] # [12, 120, 1200, 12000] # 200 # 200
 entry_sizes = [64]  # [16, 32, 64]
 entries_per_page = [64]  #  [256, 128, 64]
 
+entry_sizes = [64]
+entries_per_page = [64]
 
 # buffer_sizes_in_pages = [128, 512, 2048, 4096]
 buffer_sizes_in_pages = [4096]
