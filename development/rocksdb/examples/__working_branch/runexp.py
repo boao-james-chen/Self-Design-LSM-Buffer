@@ -20,15 +20,17 @@ if len(sys.argv) > 1:
 ## ============================================================ ##
 ## Also check arguments defined in __main__
 
-inserts = 150000  # 000
+inserts = 120000  # 000
 updates = 0
 range_queries = 0 # 200
 selectivities = [0] # [0.0001, 0.02, 0.08, 0.4, 0.8]  # [0.02, 0.06, 0.08, 0.1, 0.2, 0.4, 0.6]
-point_queries = 15000 # 200 # 200
+point_queries = 0 # 200 # 200
 
 entry_sizes = [16, 32, 64]
 entries_per_page = [256, 128, 64]
 
+entry_sizes = [64]
+entries_per_page = [64]
 
 # buffer_sizes_in_pages = [128, 512, 2048, 4096]
 buffer_sizes_in_pages = [4096]
@@ -42,15 +44,18 @@ HASHLINKLIST = "hashlinklist"
 
 # refer into ./emu_environment.h
 memtable_factories = {
-    SKIPLIST: 1,
+    # SKIPLIST: 1,
     VECTOR: 2,
-    HASHSKIPLIST: 3,
-    HASHLINKLIST: 4,
+    # HASHSKIPLIST: 3,
+    # HASHLINKLIST: 4,
 }
 
 # these are only applicable in HashSkipList & HashLinkList
-prefix_lengths = [2, 4, 8, 10]
-bucket_counts = [1000, 10000, 50000, 100000, 1000000]
+# prefix_lengths = [2, 4, 8, 10]
+# bucket_counts = [1000, 10000, 50000, 100000, 1000000]
+
+prefix_lengths = [4]
+bucket_counts = [100000]
 
 
 # ## These are the default values for the experiments
@@ -133,7 +138,7 @@ if __name__ == "__main__":
 
     for selectivity in selectivities:
         for entry_size, epp in zip(entry_sizes, entries_per_page):
-            exp_dir = Path.joinpath(CWD, f"experiments-Footprint-And-Writes-{selectivity}-{entry_size}-{epp}")
+            exp_dir = Path.joinpath(CWD, f"experiments-Writes-Pre-{selectivity}-{entry_size}-{epp}")
 
             if not exp_dir.exists():
                 print(f"Creating new experiments directory: {exp_dir}")
