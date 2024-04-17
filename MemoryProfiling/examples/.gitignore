@@ -9,8 +9,10 @@ rocksdb_backup_restore_example
 simple_example
 transaction_example
 
-# [txt]
-**txt**
+# [txt, csv, log]
+**.txt**
+**.csv**
+**.log**
 
 # DB
 **/**db_working**/**
@@ -21,6 +23,3 @@ transaction_example
 
 # experiments*
 **/experiments**
-
-# vtune #
-**/r000*/**

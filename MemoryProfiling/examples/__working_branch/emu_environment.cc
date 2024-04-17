@@ -54,6 +54,7 @@ EmuEnv::EmuEnv() {
   prefix_length = 0;
   bucket_count = 500000;
   threshold_use_skiplist = 256;
+  vector_pre_allocation_size = 0;
 
   target_file_size_base = buffer_size;
   level_compaction_dynamic_level_bytes = false;

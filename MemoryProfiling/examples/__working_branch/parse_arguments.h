@@ -101,20 +101,26 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
   // !!AS-feb15-XXIV!!
   args::ValueFlag<int> prefix_length_cmd(
       group1, "prefix_length",
-      "[Prefix Length: Number of bytes of the key forming the prefix; def: 1]",
-      {'l', "prefix_length"});
+      "[Prefix Length: Number of bytes of the key forming the prefix; def: 0]",
+      {'X', "prefix_length"});
 
   args::ValueFlag<long> bucket_count_cmd(
       group1, "bucket_count",
-      "[Bucket Count]: Number of buckets for the hash table in HashSkipList & "
+      "[Bucket Count: Number of buckets for the hash table in HashSkipList & "
       "HashLinkList Memtables; def: 50000]",
-      {"bucket_count", "bucket_count"});
+      {'H', "bucket_count"});
 
   args::ValueFlag<long> threshold_use_skiplist_cmd(
       group1, "threshold_use_skiplist",
-      "[Threshold Use SkipList]: Threshold based on which the conversion will "
+      "[Threshold Use SkipList: Threshold based on which the conversion will "
       "happen from HashLinkList to HashSkipList; def: 256]",
       {"threshold_use_skiplist", "threshold_use_skiplist"});
+
+  args::ValueFlag<long> vector_pre_allocation_size_cmd(
+      group1,
+      "preallocation_vector_size",
+      "[Preallocation Vector Size: Size to preallocation to vector memtable; "
+      "def: 0]", {'A', "preallocation_size"});
 
   try {
     parser.ParseCLI(argc, argv);
@@ -190,6 +196,8 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
   _env->threshold_use_skiplist = threshold_use_skiplist_cmd
                                      ? args::get(threshold_use_skiplist_cmd)
                                      : _env->threshold_use_skiplist;
-
+  _env->vector_pre_allocation_size =
+      vector_pre_allocation_size_cmd ? args::get(vector_pre_allocation_size_cmd)
+                                     : _env->vector_pre_allocation_size;
   return 0;
 }

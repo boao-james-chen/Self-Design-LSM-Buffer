@@ -18,15 +18,15 @@ std::mutex mtx;
 std::condition_variable cv;
 bool compaction_complete = false;
 
-struct InsertEvent {
-  std::chrono::steady_clock::time_point timestamp_;
-  std::chrono::duration<double> time_taken_;
-};
+// struct InsertEvent {
+//   std::chrono::steady_clock::time_point timestamp_;
+//   std::chrono::duration<double> time_taken_;
+// };
 
-struct PointQueryEvent {
-  std::chrono::steady_clock::time_point timestamp_;
-  std::chrono::duration<double> time_taken_;
-};
+// struct PointQueryEvent {
+//   std::chrono::steady_clock::time_point timestamp_;
+//   std::chrono::duration<double> time_taken_;
+// };
 
 struct FlushEvent {
   std::chrono::steady_clock::time_point timestamp_;
@@ -50,8 +50,8 @@ struct CompactionEvent {
   uint64_t filter_size_out_;
 };
 
-std::vector<InsertEvent> insert_events_;
-std::vector<PointQueryEvent> point_query_events_;
+// std::vector<InsertEvent> insert_events_;
+// std::vector<PointQueryEvent> point_query_events_;
 std::vector<FlushEvent> flush_events_;
 std::vector<CompactionEvent> compaction_events_;
 
@@ -257,12 +257,6 @@ int runWorkload(EmuEnv* _env) {
   std::chrono::nanoseconds total_range_delete_time_elapsed(0);
   auto start = std::chrono::high_resolution_clock::now();
 
-#ifdef PROFILE
-          auto workload_start_time = std::chrono::high_resolution_clock::now();
-          unsigned long long inserts_time = 0;
-          unsigned long long point_queries_time = 0;
-#endif  // PROFILE
-
   while (!workload_file.eof()) {
     char instruction;
     long key, start_key, end_key;
@@ -272,41 +266,27 @@ int runWorkload(EmuEnv* _env) {
     switch (instruction) {
       case 'I':  // insert
         workload_file >> key >> value;
-        // if (_env->verbosity == 2) // std::cout << instruction << " " << key
-        // << " " << value << "" << std::endl;
 
         // start measuring the time taken by the insert
         insert_start = std::chrono::high_resolution_clock::now();
 
         // Put key-value
-{
-#ifdef PROFILE
-          auto inserts_start_time = std::chrono::high_resolution_clock::now();
-#endif // PROFILE
 
         s = db->Put(w_options, std::to_string(key), value);
         if (!s.ok()) std::cerr << s.ToString() << std::endl;
         assert(s.ok());
 
-#ifdef PROFILE
-          auto inserts_end_time = std::chrono::high_resolution_clock::now();
-          inserts_time += std::chrono::duration_cast<std::chrono::nanoseconds>(inserts_start_time - inserts_end_time).count();
-#endif // PROFILE
-}
-
         // end measuring the time taken by the insert
         insert_end = std::chrono::high_resolution_clock::now();
         total_insert_time_elapsed += std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start);
-        insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
-                                             insert_end - insert_start});
+        // insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
+        //                                      insert_end - insert_start});
         counter++;
         fade_stats->inserts_completed++;
         break;
 
       case 'U':  // update
         workload_file >> key >> value;
-        // if (_env->verbosity == 2) // std::cout << instruction << " " << key
-        // << " " << value << "" << std::endl;
 
         // start measuring the time taken by the update
         update_start = std::chrono::high_resolution_clock::now();
@@ -376,24 +356,13 @@ int runWorkload(EmuEnv* _env) {
 
         // start measuring the time taken by the query
         query_start = std::chrono::high_resolution_clock::now();
-{
-#ifdef PROFILE
-          auto pq_start_time = std::chrono::high_resolution_clock::now();
-#endif // PROFILE
-
         s = db->Get(r_options, std::to_string(key), &value);
-
-#ifdef PROFILE
-          auto pq_end_time = std::chrono::high_resolution_clock::now();
-          point_queries_time += std::chrono::duration_cast<std::chrono::nanoseconds>(pq_start_time - pq_end_time).count();
-#endif // PROFILE
-}
 
         // end measuring the time taken by the query
         query_end = std::chrono::high_resolution_clock::now();
         total_query_time_elapsed += std::chrono::duration_cast<std::chrono::nanoseconds>(query_end - query_start);
-        point_query_events_.push_back(PointQueryEvent{
-            std::chrono::steady_clock::now(), insert_end - insert_start});
+        // point_query_events_.push_back(PointQueryEvent{
+        //     std::chrono::steady_clock::now(), insert_end - insert_start});
         counter++;
         fade_stats->point_queries_completed++;
         break;
@@ -416,7 +385,7 @@ int runWorkload(EmuEnv* _env) {
           for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
             if (it->key().ToString() >= std::to_string(end_key)) {
               break;
-            std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
+            // std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
             }
           }
           if (!it->status().ok()) {
@@ -461,15 +430,6 @@ int runWorkload(EmuEnv* _env) {
   // and printing the results
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::nanoseconds elapsed_seconds = end - start;
-#ifdef PROFILE
-          auto workload_end_time = std::chrono::high_resolution_clock::now();
-          std::cout << "WorkloadExecutionTime: "
-                    << std::chrono::duration_cast<std::chrono::nanoseconds>(
-                           workload_end_time - workload_start_time)
-                           .count() << " ns"
-                    << std::endl
-                    << std::flush;
-#endif  // PROFILE
 
   std::cout
       << "\n----------------------Workload Complete-----------------------"
@@ -521,31 +481,31 @@ int runWorkload(EmuEnv* _env) {
 
   flush_stats_file.close();
 
-  std::ofstream inserts_stats_file("insert_stats.csv");
-  inserts_stats_file << "TimePoint,TimeTaken" << std::endl;
+  // std::ofstream inserts_stats_file("insert_stats.csv");
+  // inserts_stats_file << "TimePoint,TimeTaken" << std::endl;
 
-  for (int i = 0; i < insert_events_.size(); i++) {
-    auto element = insert_events_[i];
-    inserts_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
-                              element.timestamp_ - start_time_point)
-                              .count()
-                       << "," << element.time_taken_.count() << std::endl;
-  }
+  // for (int i = 0; i < insert_events_.size(); i++) {
+  //   auto element = insert_events_[i];
+  //   inserts_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+  //                             element.timestamp_ - start_time_point)
+  //                             .count()
+  //                      << "," << element.time_taken_.count() << std::endl;
+  // }
 
-  inserts_stats_file.close();
+  // inserts_stats_file.close();
 
-  std::ofstream pq_stats_file("pq_stats.csv");
-  pq_stats_file << "TimePoint,TimeTaken" << std::endl;
+  // std::ofstream pq_stats_file("pq_stats.csv");
+  // pq_stats_file << "TimePoint,TimeTaken" << std::endl;
 
-  for (int i = 0; i < point_query_events_.size(); i++) {
-    auto element = point_query_events_[i];
-    pq_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
-                         element.timestamp_ - start_time_point)
-                         .count()
-                  << "," << element.time_taken_.count() << std::endl;
-  }
+  // for (int i = 0; i < point_query_events_.size(); i++) {
+  //   auto element = point_query_events_[i];
+  //   pq_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+  //                        element.timestamp_ - start_time_point)
+  //                        .count()
+  //                 << "," << element.time_taken_.count() << std::endl;
+  // }
 
-  pq_stats_file.close();
+  // pq_stats_file.close();
 
   std::ofstream compaction_stats_file("compaction_stats.csv");
   compaction_stats_file

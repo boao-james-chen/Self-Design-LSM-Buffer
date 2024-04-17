@@ -179,6 +179,7 @@ class EmuEnv {
   uint32_t prefix_length;
   unsigned long bucket_count; // Used for Hash** Memtable
   unsigned long threshold_use_skiplist; // used for conversion of HashLinkList to HashSkipList 
+  unsigned long vector_pre_allocation_size;
 
   // Other DBOptions
   bool create_if_missing;

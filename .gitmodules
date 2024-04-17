@@ -1,0 +1,6 @@
+[submodule "text/paper-draft"]
+	path = text/paper-draft
+	url = https://github.com/SSD-Brandeis/LSMMemoryProfilingText
+[submodule "KV-WorkloadGenerator"]
+	path = KV-WorkloadGenerator
+	url = https://github.com/SSD-Brandeis/KV-WorkloadGenerator
