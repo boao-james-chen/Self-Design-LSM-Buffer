@@ -24,33 +24,27 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
       group1, "cc", "Clear system cache [def: 1]", {"cc"});
 
   args::ValueFlag<int> size_ratio_cmd(
-      group1, "T",
-      "The number of unique inserts to issue in the experiment [def: 10]",
-      {'T', "size_ratio"});
+      group1, "T", "The size ratio for the LSM [def: 10]", {'T', "size_ratio"});
   args::ValueFlag<int> buffer_size_in_pages_cmd(
-      group1, "P",
-      "The number of unique inserts to issue in the experiment [def: 4096]",
+      group1, "P", "The number of pages in memory buffer [def: 4096]",
       {'P', "buffer_size_in_pages"});
   args::ValueFlag<int> entries_per_page_cmd(
-      group1, "B",
-      "The number of unique inserts to issue in the experiment [def: 4]",
+      group1, "B", "The number of entries in one page [def: 4]",
       {'B', "entries_per_page"});
   args::ValueFlag<int> entry_size_cmd(
       group1, "E",
-      "The number of unique inserts to issue in the experiment [def: 1024 B]",
+      "The size of one entry you have in workload.txt [def: 1024 B]",
       {'E', "entry_size"});
   args::ValueFlag<long> buffer_size_cmd(
-      group1, "M",
-      "The number of unique inserts to issue in the experiment [def: 16 MB]",
+      group1, "M", "The memory buffer size in bytes [def: 16 MB]",
       {'M', "memory_size"});
   args::ValueFlag<int> file_to_memtable_size_ratio_cmd(
       group1, "file_to_memtable_size_ratio",
-      "The number of unique inserts to issue in the experiment [def: 1]",
+      "The ratio between files and memtable [def: 1]",
       {'f', "file_to_memtable_size_ratio"});
-  args::ValueFlag<long> file_size_cmd(
-      group1, "file_size",
-      "The number of unique inserts to issue in the experiment [def: 256 KB]",
-      {'F', "file_size"});
+  args::ValueFlag<long> file_size_cmd(group1, "file_size",
+                                      "The size of one SST file [def: 256 KB]",
+                                      {'F', "file_size"});
   args::ValueFlag<int> verbosity_cmd(
       group1, "verbosity", "The verbosity level of execution [0,1,2; def: 0]",
       {'V', "verbosity"});
@@ -60,31 +54,29 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
       "kByCompensatedSize, 3 for kOldestLargestSeqFirst, 4 for "
       "kOldestSmallestSeqFirst; def: 1]",
       {'c', "compaction_pri"});
-  // !YBS-sep07-XX!
   args::ValueFlag<int> compaction_style_cmd(
       group1, "compaction_style",
       "[Compaction priority: 1 for kCompactionStyleLevel, 2 for "
       "kCompactionStyleUniversal, 3 for kCompactionStyleFIFO, 4 for "
       "kCompactionStyleNone; def: 1]",
-      {'C', "compaction_style"});
+      {'C', "compaction_style"});  // !YBS-sep07-XX!
   args::ValueFlag<int> bits_per_key_cmd(
       group1, "bits_per_key",
       "The number of bits per key assigned to Bloom filter [def: 10]",
       {'b', "bits_per_key"});
-  // !YBS-sep09-XX!
-  args::ValueFlag<int> block_cache_cmd(
-      group1, "bb", "Block cache size in MB [def: 8 MB]", {"bb"});
-  // !YBS-sep17-XX!
+  args::ValueFlag<int> block_cache_cmd(group1, "bb",
+                                       "Block cache size in MB [def: 8 MB]",
+                                       {"bb"});  // !YBS-sep09-XX!
   args::ValueFlag<int> show_progress_cmd(group1, "show_progress",
-                                         "Show progress [def: 0]", {'s', "sp"});
-  // !YBS-feb15-XXI!
+                                         "Show progress [def: 0]",
+                                         {'s', "sp"});  // !YBS-sep17-XX!
   args::ValueFlag<double> del_per_th_cmd(
       group1, "del_per_th", "Delete persistence threshold [def: -1]",
-      {'t', "dpth"});
-  // !YBS-feb15-XXI!
+      {'t', "dpth"});  // !YBS-feb15-XXI!
   args::ValueFlag<int> enable_rocksdb_perf_iostat_cmd(
       group1, "enable_rocksdb_perf_iostat",
-      "Enable RocksDB's internal Perf and IOstat [def: 0]", {"stat"});
+      "Enable RocksDB's internal Perf and IOstat [def: 0]",
+      {"stat"});  // !YBS-feb15-XXI!
 
   args::ValueFlag<long> num_inserts_cmd(
       group1, "inserts",
@@ -117,10 +109,10 @@ int parse_arguments(int argc, char* argv[], EmuEnv* _env) {
       {"threshold_use_skiplist", "threshold_use_skiplist"});
 
   args::ValueFlag<long> vector_pre_allocation_size_cmd(
-      group1,
-      "preallocation_vector_size",
+      group1, "preallocation_vector_size",
       "[Preallocation Vector Size: Size to preallocation to vector memtable; "
-      "def: 0]", {'A', "preallocation_size"});
+      "def: 0]",
+      {'A', "preallocation_size"});
 
   try {
     parser.ParseCLI(argc, argv);
