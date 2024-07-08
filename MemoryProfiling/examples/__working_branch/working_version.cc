@@ -19,6 +19,6 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  int s = runWorkload(_env);
+  runWorkload(_env);
   return 0;
 }

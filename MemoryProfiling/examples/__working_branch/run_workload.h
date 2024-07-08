@@ -155,7 +155,7 @@ void WaitForCompactions(rocksdb::DB* db) {
   }
 }
 
-int runWorkload(EmuEnv* _env) {
+void runWorkload(EmuEnv* _env) {
   DB* db;
   Options options;
   WriteOptions w_options;
@@ -554,6 +554,4 @@ int runWorkload(EmuEnv* _env) {
     std::cout << "----------------------------------------" << std::endl;
   }
   // !END
-
-  return 1;
 }

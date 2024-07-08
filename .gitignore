@@ -7,3 +7,9 @@
 
 # build
 **/build/**
+
+# python virtual environments
+.venv/
+
+# Jetbrains configuration
+.idea/
