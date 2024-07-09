@@ -30,33 +30,35 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
 
   // ============================================================ //
 
-  switch (_env->memtable_factory) {
-    case 1:
-      op->memtable_factory =
-          std::shared_ptr<SkipListFactory>(new SkipListFactory);
-      break;
-    case 2:
-      op->memtable_factory =
-          std::shared_ptr<VectorRepFactory>(new VectorRepFactory(_env->vector_pre_allocation_size));
-      break;
-    case 3:
-      op->memtable_factory.reset(NewHashSkipListRepFactory(
-          _env->bucket_count, skiplist_height, skiplist_branching_factor));
-      op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
-      break;
-    case 4:
-      op->memtable_factory.reset(NewHashLinkListRepFactory(
-          _env->bucket_count, huge_page_tlb_size,
-          bucket_entries_logging_threshold, if_log_bucket_dist_when_flash,
-          _env->threshold_use_skiplist));
-      op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
-      break;
-    case 5:
+//  switch (_env->memtable_factory) {
+//    case 1:
+//      op->memtable_factory =
+//          std::shared_ptr<SkipListFactory>(new SkipListFactory);
+//      break;
+//    case 2:
+//      op->memtable_factory =
+//          std::shared_ptr<VectorRepFactory>(new VectorRepFactory(_env->vector_pre_allocation_size));
+//      break;
+//    case 3:
+//      op->memtable_factory.reset(NewHashSkipListRepFactory(
+//          _env->bucket_count, skiplist_height, skiplist_branching_factor));
+//      op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
+//      break;
+//    case 4:
+//      op->memtable_factory.reset(NewHashLinkListRepFactory(
+//          _env->bucket_count, huge_page_tlb_size,
+//          bucket_entries_logging_threshold, if_log_bucket_dist_when_flash,
+//          _env->threshold_use_skiplist));
+//      op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
+//      break;
+//    case 5:
+//      op->memtable_factory = std::shared_ptr<NeverSortedVectorRepFactory>(new NeverSortedVectorRepFactory(_env->vector_pre_allocation_size));
+//      break;
+//    default:
+//      std::cerr << "error: memtable_factory" << std::endl;
+//  }
+
       op->memtable_factory = std::shared_ptr<NeverSortedVectorRepFactory>(new NeverSortedVectorRepFactory(_env->vector_pre_allocation_size));
-      break;
-    default:
-      std::cerr << "error: memtable_factory" << std::endl;
-  }
 
   // Compaction
   switch (_env->compaction_pri) {
