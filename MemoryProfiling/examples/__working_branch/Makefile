@@ -1,37 +1,28 @@
-include ../../make_config.mk
+# Define paths
+PATH_TO_LIBROCKSDB = ../../build/librocksdb.a
 
+# Define compiler flags
+CXXFLAGS += -pg -std=c++17 -O2 -DPROFILE
+
+# Conditional flags
 ifndef DISABLE_JEMALLOC
 	ifdef JEMALLOC
-		PLATFORM_CXXFLAGS += -DROCKSDB_JEMALLOC -DJEMALLOC_NO_DEMANGLE
+		CXXFLAGS += -DROCKSDB_JEMALLOC -DJEMALLOC_NO_DEMANGLE $(JEMALLOC_INCLUDE)
+		EXEC_LDFLAGS += $(JEMALLOC_LIB) -lpthread
+	else
+		EXEC_LDFLAGS += -lpthread
 	endif
-	EXEC_LDFLAGS := $(JEMALLOC_LIB) $(EXEC_LDFLAGS) -lpthread
-	PLATFORM_CXXFLAGS += $(JEMALLOC_INCLUDE)
 endif
 
 ifneq ($(USE_RTTI), 1)
 	CXXFLAGS += -fno-rtti
 endif
 
-# (shubham) Emable these options for debug
-# The librocksdb_debug is not working
-CFLAGS += -pg
-CXXFLAGS += -pg
-
-.PHONY: clean librocksdb
-
+# Targets
 all: working_version 
 
-working_version: librocksdb working_version.cc emu_environment.cc stats.cc aux_time.cc
-	$(CXX) $(CXXFLAGS) $@.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb.a -I../../include -I../.. -O2 -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS) -DPROFILE
-
-# working_version_debug: librocksdb_debug working_version.cc emu_environment.cc stats.cc aux_time.cc
-# 	$(CXX) $(CXXFLAGS) working_version.cc -o$@ emu_environment.cc stats.cc aux_time.cc ../../librocksdb_debug.a -I../../include -I../.. -O0 -ggdb -std=c++11 $(PLATFORM_LDFLAGS) $(PLATFORM_CXXFLAGS) $(EXEC_LDFLAGS)
+working_version: working_version.cc db_env.cc stats.cc aux_time.cc parse_arguments.h config_options.h run_workload.h db_env.h
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(PATH_TO_LIBROCKSDB) -I../../include -I../.. $(EXEC_LDFLAGS)
 
 clean:
-	rm -rf working_version working_version_profile working_version_debug working_version_debug.* 
-
-librocksdb:
-	cd ../.. && $(MAKE) static_lib
-
-# librocksdb_debug:
-# 	cd ../.. && $(MAKE) dbg
+	rm -rf working_version

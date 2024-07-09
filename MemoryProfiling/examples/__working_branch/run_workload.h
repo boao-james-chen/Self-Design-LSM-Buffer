@@ -1,32 +1,21 @@
 #include <rocksdb/db.h>
-#include <rocksdb/table.h>
-// !YBS-sep01-XX!
-#include <rocksdb/perf_context.h>
-// !YBS-sep01-XX!
 #include <rocksdb/iostats_context.h>
+#include <rocksdb/perf_context.h>
+#include <rocksdb/table.h>
 
+#include <fstream>
 #include <iomanip>
 #include <thread>
 
 #include "aux_time.h"
 #include "config_options.h"
-#include "emu_environment.h"
+#include "db_env.h"
 #include "stats.h"
 
 std::string kDBPath = "./db_working_home";
 std::mutex mtx;
 std::condition_variable cv;
 bool compaction_complete = false;
-
-// struct InsertEvent {
-//   std::chrono::steady_clock::time_point timestamp_;
-//   std::chrono::duration<double> time_taken_;
-// };
-
-// struct PointQueryEvent {
-//   std::chrono::steady_clock::time_point timestamp_;
-//   std::chrono::duration<double> time_taken_;
-// };
 
 struct FlushEvent {
   std::chrono::steady_clock::time_point timestamp_;
@@ -155,7 +144,7 @@ void WaitForCompactions(rocksdb::DB* db) {
   }
 }
 
-int runWorkload(EmuEnv* _env) {
+void runWorkload(DBEnv* env) {
   DB* db;
   Options options;
   WriteOptions w_options;
@@ -164,10 +153,10 @@ int runWorkload(EmuEnv* _env) {
   FlushOptions f_options;
   auto start_time_point = std::chrono::steady_clock::now();
 
-  configOptions(_env, &options, &table_options, &w_options, &r_options,
+  configOptions(env, &options, &table_options, &w_options, &r_options,
                 &f_options);
 
-  if (_env->destroy_database) {
+  if (env->IsDestroyDatabaseEnabled()) {
     DestroyDB(kDBPath, options);
     // std::cout << "Destroying database ..." << std::endl;
   }
@@ -200,12 +189,12 @@ int runWorkload(EmuEnv* _env) {
 
   // !YBS-sep09-XX!
   // Clearing the system cache
-  if (_env->clear_system_cache) {
+  if (env->clear_system_cache) {
     // std::cout << "Clearing system cache ..." << std::endl;
-    system("sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'");
+    auto _ = system("sudo sh -c 'echo 3 >/proc/sys/vm/drop_caches'");
   }
   // START stat collection
-  if (_env->enable_rocksdb_perf_iostat == 1) {  // !YBS-feb15-XXI!
+  if (env->IsPerfIOStatEnabled()) {
     // begin perf/iostat code
     rocksdb::SetPerfLevel(
         rocksdb::PerfLevel::kEnableTimeAndCPUTimeExceptForMutex);
@@ -220,20 +209,16 @@ int runWorkload(EmuEnv* _env) {
   workload_file.open("workload.txt");
   assert(workload_file);
 
-  Iterator* it; // = db->NewIterator(r_options);  // for range reads
-  uint32_t counter = 0;                       // for progress bar
+  Iterator* it;          // = db->NewIterator(r_options);  // for range reads
+  uint32_t counter = 0;  // for progress bar
 
-  for (int i = 0; i < 20; ++i) {
-    _env->level_delete_persistence_latency[i] = -1;
-    _env->RR_level_last_file_selected[i] = -1;  // !YBS-sep06-XX!
-  }
   // !YBS-sep09-XX!
   my_clock start_time, end_time;
   if (my_clock_get_time(&start_time) == -1)
     std::cerr << "Failed to get experiment start time" << std::endl;
 
-  _env->level0_file_num_compaction_trigger = 1;
-  _env->level0_stop_writes_trigger = 1;
+  env->level0_file_num_compaction_trigger = 1;
+  env->level0_stop_writes_trigger = 1;
 
   // time variables for measuring the time taken by the workload
   // std::chrono::nanoseconds start, end;
@@ -262,7 +247,7 @@ int runWorkload(EmuEnv* _env) {
     long key, start_key, end_key;
     string value;
     workload_file >> instruction;
-    _env->current_op = instruction;  // !YBS-sep18-XX!
+
     switch (instruction) {
       case 'I':  // insert
         workload_file >> key >> value;
@@ -278,7 +263,9 @@ int runWorkload(EmuEnv* _env) {
 
         // end measuring the time taken by the insert
         insert_end = std::chrono::high_resolution_clock::now();
-        total_insert_time_elapsed += std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end - insert_start);
+        total_insert_time_elapsed +=
+            std::chrono::duration_cast<std::chrono::nanoseconds>(insert_end -
+                                                                 insert_start);
         // insert_events_.push_back(InsertEvent{std::chrono::steady_clock::now(),
         //                                      insert_end - insert_start});
         counter++;
@@ -296,10 +283,10 @@ int runWorkload(EmuEnv* _env) {
           auto update_start_time = std::chrono::high_resolution_clock::now();
 #endif  // PROFILE
 
-        // Put key-value
-        s = db->Put(w_options, std::to_string(key), value);
-        if (!s.ok()) std::cerr << s.ToString() << std::endl;
-        assert(s.ok());
+          // Put key-value
+          s = db->Put(w_options, std::to_string(key), value);
+          if (!s.ok()) std::cerr << s.ToString() << std::endl;
+          assert(s.ok());
 
 #ifdef PROFILE
           auto update_end_time = std::chrono::high_resolution_clock::now();
@@ -360,7 +347,9 @@ int runWorkload(EmuEnv* _env) {
 
         // end measuring the time taken by the query
         query_end = std::chrono::high_resolution_clock::now();
-        total_query_time_elapsed += std::chrono::duration_cast<std::chrono::nanoseconds>(query_end - query_start);
+        total_query_time_elapsed +=
+            std::chrono::duration_cast<std::chrono::nanoseconds>(query_end -
+                                                                 query_start);
         // point_query_events_.push_back(PointQueryEvent{
         //     std::chrono::steady_clock::now(), insert_end - insert_start});
         counter++;
@@ -385,7 +374,8 @@ int runWorkload(EmuEnv* _env) {
           for (it->Seek(std::to_string(start_key)); it->Valid(); it->Next()) {
             if (it->key().ToString() >= std::to_string(end_key)) {
               break;
-            // std::cout << "found key = " << it->key().ToString() << std::endl << std::flush;
+              // std::cout << "found key = " << it->key().ToString() <<
+              // std::endl << std::flush;
             }
           }
           if (!it->status().ok()) {
@@ -402,7 +392,6 @@ int runWorkload(EmuEnv* _env) {
                     << std::endl
                     << std::flush;
 #endif  // PROFILE
-
         }
         // end measuring the time taken by the query
         range_query_end = std::chrono::high_resolution_clock::now();
@@ -445,11 +434,9 @@ int runWorkload(EmuEnv* _env) {
   std::cout << "Total time taken by deletes = "
             << total_delete_time_elapsed.count() << " ns" << std::endl;
   std::cout << "Total time taken by range deletes = "
-            << total_range_delete_time_elapsed.count() << " ns"
-            << std::endl;
+            << total_range_delete_time_elapsed.count() << " ns" << std::endl;
   std::cout << "Total time taken by range queries = "
-            << total_range_query_time_elapsed.count() << " ns"
-            << std::endl;
+            << total_range_query_time_elapsed.count() << " ns" << std::endl;
 
   workload_file.close();
 
@@ -540,7 +527,7 @@ int runWorkload(EmuEnv* _env) {
   fade_stats->exp_runtime = getclock_diff_ns(start_time, end_time);
   // !END
 
-  if (_env->enable_rocksdb_perf_iostat == 1) {  // !YBS-feb15-XXI!
+  if (env->IsPerfIOStatEnabled()) {  // !YBS-feb15-XXI!
     // sleep(5);
     rocksdb::SetPerfLevel(rocksdb::PerfLevel::kDisable);
     std::cout << "RocksDB Perf Context : " << std::endl;
@@ -554,6 +541,4 @@ int runWorkload(EmuEnv* _env) {
     std::cout << "----------------------------------------" << std::endl;
   }
   // !END
-
-  return 1;
 }
