@@ -137,6 +137,7 @@ LIB_SOURCES =                                                   \
   memtable/hash_skiplist_rep.cc                                 \
   memtable/skiplistrep.cc                                       \
   memtable/vectorrep.cc                                         \
+  memtable/never_sorted_vector_rep.cc                           \
   memtable/write_buffer_manager.cc                              \
   monitoring/histogram.cc                                       \
   monitoring/histogram_windowing.cc                             \

@@ -51,6 +51,9 @@ void configOptions(EmuEnv *_env, Options *op, BlockBasedTableOptions *t_op,
           _env->threshold_use_skiplist));
       op->prefix_extractor.reset(NewFixedPrefixTransform(_env->prefix_length));
       break;
+    case 5:
+      op->memtable_factory = std::shared_ptr<NeverSortedVectorRepFactory>(new NeverSortedVectorRepFactory(_env->vector_pre_allocation_size));
+      break;
     default:
       std::cerr << "error: memtable_factory" << std::endl;
   }

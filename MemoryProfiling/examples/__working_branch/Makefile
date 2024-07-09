@@ -12,7 +12,7 @@ ifneq ($(USE_RTTI), 1)
 	CXXFLAGS += -fno-rtti
 endif
 
-# (shubham) Emable these options for debug
+# (shubham) Enable these options for debug
 # The librocksdb_debug is not working
 CFLAGS += -pg
 CXXFLAGS += -pg
@@ -32,6 +32,8 @@ clean:
 
 librocksdb:
 	cd ../.. && $(MAKE) static_lib
+#librocksdb:
+#	cd ../../build && $(MAKE) rocksdb
 
 # librocksdb_debug:
-# 	cd ../.. && $(MAKE) dbg
+# 	cd ../../build && $(MAKE) rocksdb
