@@ -63,6 +63,14 @@ struct DbPath;
 
 using FileTypeSet = SmallEnumSet<FileType, FileType::kBlobFile>;
 
+enum Verbosity {
+  NONE = 0,
+  LOW = 1,
+  MEDIUM = 2,
+  HIGH = 3,
+  EXTREME = 4,
+};
+
 struct ColumnFamilyOptions : public AdvancedColumnFamilyOptions {
   // The function recovers options to a previous version. Only 4.6 or later
   // versions are supported.
@@ -480,6 +488,10 @@ struct DBOptions {
   // cores. You almost definitely want to call this function if your system is
   // bottlenecked by RocksDB.
   DBOptions* IncreaseParallelism(int total_threads = 16);
+
+  // verbosity to see print statements
+  // default to 0 (means no prints)
+  Verbosity verbosity = Verbosity::NONE;
 
   // If true, the database will be created if it is missing.
   // Default: false

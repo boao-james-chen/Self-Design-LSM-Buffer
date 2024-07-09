@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <cstdlib>
 #include "stats.h"
-#include "emu_environment.h"
+#include "db_env.h"
 
 
 Stats* Stats::instance = 0;
@@ -57,7 +57,7 @@ Stats::Stats()
 }
 
 void Stats::printStats() {
-  EmuEnv* _env = EmuEnv::getInstance();
+  DBEnv* env = DBEnv::GetInstance();
   
   int l = 12;
 
@@ -114,7 +114,6 @@ void Stats::printStats() {
     << "dpth" << std::setfill(' ') << std::setw(l+7) 
     << "exp_runtime (ms)" << "\n"; // !YBS-sep09-XX!
   std::cout << std::setfill(' ') << std::setw(l-3) << space_amp;
-  std::cout << std::setfill(' ') << std::setw(l) << _env->delete_persistence_latency; // !YBS-feb15-XX!
   std::cout << std::setfill(' ') << std::setw(l+7) << std::fixed << std::setprecision(2) // !YBS-sep09-XX!
     /*<< static_cast<double>(exp_runtime)/1000000*/; // !YBS-sep09-XX!
   std::cout << std::endl;
