@@ -21,7 +21,7 @@ endif
 # Targets
 all: working_version 
 
-working_version: working_version.cc db_env.cc stats.cc aux_time.cc parse_arguments.h config_options.h run_workload.h
+working_version: working_version.cc db_env.cc stats.cc aux_time.cc parse_arguments.h config_options.h run_workload.h db_env.h
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(PATH_TO_LIBROCKSDB) -I../../include -I../.. $(EXEC_LDFLAGS)
 
 clean:

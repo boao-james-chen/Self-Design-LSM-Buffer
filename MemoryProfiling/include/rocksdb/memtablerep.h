@@ -392,16 +392,16 @@ class VectorRepFactory : public MemTableRepFactory {
 //
 // Parameters:
 //   count: Passed to the constructor of the underlying std::vector of each
-//     NeverSortedVectorRep. On initialization, the underlying array will be
+//     UnsortedVectorRep. On initialization, the underlying array will be
 //     at least count bytes reserved for usage.
-class NeverSortedVectorRepFactory : public MemTableRepFactory {
+class UnsortedVectorRepFactory : public MemTableRepFactory {
   size_t count_;
 
 public:
-  explicit NeverSortedVectorRepFactory(size_t count = 0);
+  explicit UnsortedVectorRepFactory(size_t count = 0);
 
   // Methods for Configurable/Customizable class overrides
-  static const char* kClassName() { return "NeverSortedVectorRepFactory"; }
+  static const char* kClassName() { return "UnsortedVectorRepFactory"; }
   static const char* kNickName() { return "never_sorted_vector"; }
   const char* Name() const override { return kClassName(); }
   const char* NickName() const override { return kNickName(); }

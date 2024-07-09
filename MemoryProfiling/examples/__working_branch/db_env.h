@@ -6,7 +6,7 @@
 namespace Default {
 
 const unsigned int ENTRY_SIZE = 64;
-const unsigned int ENTRIES_PER_PAGE = 64;
+const unsigned int ENTRIES_PER_PAGE = 2048;
 const unsigned int BUFFER_SIZE_IN_PAGES = 128;
 
 const double SIZE_RATIO = 4;
@@ -18,6 +18,8 @@ const int LEVEL0_FILE_NUM_COMPACTION_TRIGGER = 1;
 
 const int MAX_OPEN_FILES = 50;
 const int MAX_FILE_OPENING_THREADS = 80;
+
+const long VECTOR_PREALLOCATION_SIZE_IN_BYTES = 16777216;  // [16MB]
 
 }  // namespace Default
 
@@ -426,7 +428,7 @@ class DBEnv {
   uint32_t linklist_threshold_use_skiplist = 256;
 
   // refer memtable.h (VectorRepFactory)
-  size_t vector_preallocation_size_in_bytes = 0;
+  size_t vector_preallocation_size_in_bytes = Default::VECTOR_PREALLOCATION_SIZE_IN_BYTES;
 #pragma endregion  // LSMMemoryBuffer
 };
 

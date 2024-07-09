@@ -100,9 +100,9 @@ void configOptions(DBEnv *env, Options *options,
           new VectorRepFactory(env->vector_preallocation_size_in_bytes));
       break;
     case 3:
-      options->memtable_factory.reset(NewHashSkipListRepFactory(
-          env->bucket_count, env->skiplist_height,
-          env->skiplist_branching_factor));
+      options->memtable_factory.reset(
+          NewHashSkipListRepFactory(env->bucket_count, env->skiplist_height,
+                                    env->skiplist_branching_factor));
       options->prefix_extractor.reset(
           NewFixedPrefixTransform(env->prefix_length));
       break;
@@ -116,7 +116,7 @@ void configOptions(DBEnv *env, Options *options,
           NewFixedPrefixTransform(env->prefix_length));
       break;
     case 5:
-      options->memtable_factory.reset(new NeverSortedVectorRepFactory(
+      options->memtable_factory.reset(new UnsortedVectorRepFactory(
           env->vector_preallocation_size_in_bytes));
       break;
     default:
