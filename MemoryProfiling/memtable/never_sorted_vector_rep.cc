@@ -68,6 +68,7 @@ class NeverSortedVectorRep : public MemTableRep {
   std::shared_ptr<Bucket> bucket_;
   mutable port::RWMutex rwlock_;
   bool immutable_;
+  bool sorted_;
   const KeyComparator& compare_;
 };
 
@@ -111,6 +112,7 @@ NeverSortedVectorRep::NeverSortedVectorRep(const KeyComparator& compare,
     : MemTableRep(allocator),
       bucket_(new Bucket()),
       immutable_(false),
+      sorted_(false),
       compare_(compare) {
   bucket_->reserve(count);
 }
@@ -185,6 +187,10 @@ void NeverSortedVectorRep::Get(const LookupKey& k, void* callback_args,
   NeverSortedVectorRep* vector_rep;
   std::shared_ptr<Bucket> bucket;
   if (immutable_) {
+    if (!sorted_) {
+      std::sort(this->bucket_->begin(), this->bucket_->end());
+      sorted_ = true;
+    }
     vector_rep = this;
   } else {
     vector_rep = nullptr;
