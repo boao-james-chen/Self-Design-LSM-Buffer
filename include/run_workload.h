@@ -12,7 +12,7 @@
 #include "db_env.h"
 #include "stats.h"
 
-std::string kDBPath = "./db_working_home";
+std::string kDBPath = "./db";
 std::mutex mtx;
 std::condition_variable cv;
 bool compaction_complete = false;
@@ -41,8 +41,8 @@ struct CompactionEvent {
 
 // std::vector<InsertEvent> insert_events_;
 // std::vector<PointQueryEvent> point_query_events_;
-std::vector<FlushEvent> flush_events_;
-std::vector<CompactionEvent> compaction_events_;
+// std::vector<FlushEvent> flush_events_;
+// std::vector<CompactionEvent> compaction_events_;
 
 /*
  * The compactions can run in background even after the workload is completely
@@ -89,12 +89,12 @@ class CompactionsListner : public EventListener {
         }
       }
 
-      compaction_events_.push_back(CompactionEvent{
-          std::chrono::steady_clock::now(),
-          compaction_job_info.input_files.size(),
-          compaction_job_info.output_files.size(), num_entries_inp,
-          data_size_inp, index_size_inp, filter_size_inp, num_entries_out,
-          data_size_out, index_size_out, filter_size_out});
+    //   compaction_events_.push_back(CompactionEvent{
+    //       std::chrono::steady_clock::now(),
+    //       compaction_job_info.input_files.size(),
+    //       compaction_job_info.output_files.size(), num_entries_inp,
+    //       data_size_inp, index_size_inp, filter_size_inp, num_entries_out,
+    //       data_size_out, index_size_out, filter_size_out});
     }
   }
 };
@@ -112,9 +112,9 @@ class BufferFlushListner : public EventListener {
     if (flush_job_info.flush_reason == FlushReason::kWriteBufferFull ||
         flush_job_info.flush_reason == FlushReason::kGetLiveFiles) {
       TableProperties tp = flush_job_info.table_properties;
-      flush_events_.push_back(FlushEvent{std::chrono::steady_clock::now(),
-                                         tp.num_entries, tp.data_size,
-                                         tp.index_size, tp.filter_size});
+      // flush_events_.push_back(FlushEvent{std::chrono::steady_clock::now(),
+      //                                    tp.num_entries, tp.data_size,
+      //                                    tp.index_size, tp.filter_size});
     }
   }
 };
@@ -452,21 +452,21 @@ void runWorkload(DBEnv* env) {
   delete db;
   fade_stats->db_open = false;
 
-  std::ofstream flush_stats_file("flush_stats.csv");
-  flush_stats_file << "TimePoint,NumEntries,DataSize,IndexSize,FilterSize"
-                   << std::endl;
+  // std::ofstream flush_stats_file("flush_stats.csv");
+  // flush_stats_file << "TimePoint,NumEntries,DataSize,IndexSize,FilterSize"
+  //                  << std::endl;
 
-  for (int i = 0; i < flush_events_.size(); i++) {
-    auto element = flush_events_[i];
-    flush_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
-                            element.timestamp_ - start_time_point)
-                            .count()
-                     << "," << element.num_entries_ << "," << element.data_size_
-                     << "," << element.index_size_ << ","
-                     << element.filter_size_ << std::endl;
-  }
+  // for (int i = 0; i < flush_events_.size(); i++) {
+  //   auto element = flush_events_[i];
+  //   flush_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+  //                           element.timestamp_ - start_time_point)
+  //                           .count()
+  //                    << "," << element.num_entries_ << "," << element.data_size_
+  //                    << "," << element.index_size_ << ","
+  //                    << element.filter_size_ << std::endl;
+  // }
 
-  flush_stats_file.close();
+  // flush_stats_file.close();
 
   // std::ofstream inserts_stats_file("insert_stats.csv");
   // inserts_stats_file << "TimePoint,TimeTaken" << std::endl;
@@ -494,31 +494,31 @@ void runWorkload(DBEnv* env) {
 
   // pq_stats_file.close();
 
-  std::ofstream compaction_stats_file("compaction_stats.csv");
-  compaction_stats_file
-      << "TimePoint,NumInputFiles,NumOutputFile,NumEntriesInput,"
-         "DataSizeInput,IndexSizeInput,FilterSizeInput,NumEntriesOutput,"
-         "DataSizeOutput,IndexSizeOutput,FilterSizeOutput"
-      << std::endl;
+  // std::ofstream compaction_stats_file("compaction_stats.csv");
+  // compaction_stats_file
+  //     << "TimePoint,NumInputFiles,NumOutputFile,NumEntriesInput,"
+  //        "DataSizeInput,IndexSizeInput,FilterSizeInput,NumEntriesOutput,"
+  //        "DataSizeOutput,IndexSizeOutput,FilterSizeOutput"
+  //     << std::endl;
 
-  for (int i = 0; i < compaction_events_.size(); i++) {
-    auto element = compaction_events_[i];
-    compaction_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
-                                 element.timestamp_ - start_time_point)
-                                 .count()
-                          << "," << element.num_input_files_ << ","
-                          << element.num_output_files_ << ","
-                          << element.num_entries_inp_ << ","
-                          << element.data_size_inp_ << ","
-                          << element.index_size_inp_ << ","
-                          << element.filter_size_inp_ << ","
-                          << element.num_entries_out_ << ","
-                          << element.data_size_out_ << ","
-                          << element.index_size_out_ << ","
-                          << element.filter_size_out_ << std::endl;
-  }
+  // for (int i = 0; i < compaction_events_.size(); i++) {
+  //   auto element = compaction_events_[i];
+  //   compaction_stats_file << std::chrono::duration_cast<std::chrono::seconds>(
+  //                                element.timestamp_ - start_time_point)
+  //                                .count()
+  //                         << "," << element.num_input_files_ << ","
+  //                         << element.num_output_files_ << ","
+  //                         << element.num_entries_inp_ << ","
+  //                         << element.data_size_inp_ << ","
+  //                         << element.index_size_inp_ << ","
+  //                         << element.filter_size_inp_ << ","
+  //                         << element.num_entries_out_ << ","
+  //                         << element.data_size_out_ << ","
+  //                         << element.index_size_out_ << ","
+  //                         << element.filter_size_out_ << std::endl;
+  // }
 
-  compaction_stats_file.close();
+  // compaction_stats_file.close();
 
   // !YBS-sep09-XX!
   if (my_clock_get_time(&end_time) == -1)
