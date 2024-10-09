@@ -446,10 +446,12 @@ void runWorkload(DBEnv* env) {
     db->GetLiveFiles(live_files, &manifest_size, true /*flush_memtable*/);
     WaitForCompactions(db);
   }
+  delete it;
+  if (!s.ok()) std::cerr << s.ToString() << std::endl;
+  assert(s.ok());
   s = db->Close();
   if (!s.ok()) std::cerr << s.ToString() << std::endl;
   assert(s.ok());
-  delete db;
   fade_stats->db_open = false;
 
   // std::ofstream flush_stats_file("flush_stats.csv");
