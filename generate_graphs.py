@@ -2,7 +2,7 @@ import os
 import re
 import matplotlib.pyplot as plt
 
-# Define buffer implementations
+
 buffer_implementations = {
     "skiplist": "Skiplist",
     "vector": "Vector",
@@ -11,13 +11,13 @@ buffer_implementations = {
     "unsorted_vector": "Unsorted Vector"
 }
 
-# Function to extract times from a log file
+
 def extract_times(log_file):
     times = {}
     with open(log_file, "r") as file:
         for line in file:
             line = line.strip()
-            # Match lines like "Total time taken by workload = 14027028 ns"
+            # grep "Total time taken by workload = 14027028 ns"
             if line.startswith("Total time taken by"):
                 parts = line.split('=')
                 if len(parts) == 2:
@@ -47,7 +47,7 @@ for impl in buffer_implementations.keys():
             print(f"Not a directory: {workload_dir}")
 
 
-operations = ["workload", "inserts", "queries", "updates", "deletes", "range deletes", "range queries"]
+operations = ["workload", "inserts", "queries", "updates"]
 
 
 all_workloads = set()
@@ -64,7 +64,7 @@ for operation in operations:
             # Get the time for the current operation, default to None if missing
             time = data[impl].get(workload, {}).get(operation, None)
             if time is None:
-                # if the time is missing set time to 0
+                # if the time is missing set it to 0
                 print(f"Time not found for operation '{operation}' in workload '{workload}' for implementation '{impl}'")
                 time = 0
             times.append(time)
@@ -80,4 +80,4 @@ for operation in operations:
     plt.savefig(f"result/{operation_name}_comparison.png")
     plt.close()
 
-print("Graphs generated and saved in the 'result' directory.")
+print("graphps saved in the 'result' directory.")

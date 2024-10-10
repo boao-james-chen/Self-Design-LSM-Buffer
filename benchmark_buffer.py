@@ -17,10 +17,10 @@ working_version_path = os.path.join(project_dir, 'bin', 'working_version')
 
 buffer_implementations = {
     1: 'skiplist',
-    2: 'vector',
-    3: 'hash_skip_list',
-    4: 'hash_linked_list',
-    5: 'unsorted_vector'
+    # 2: 'vector',
+    # 3: 'hash_skip_list',
+    # 4: 'hash_linked_list',
+    # 5: 'unsorted_vector'
 }
 
 # -I: Inserts
@@ -30,13 +30,23 @@ buffer_implementations = {
 # -Y: Range Query Selectivity
 
 workload_commands = [
-    f"{load_gen_path} -I 100 -U 0 -Q 0 -S 0 -Y 0.0",    # Insert only
-    f"{load_gen_path} -I 100 -U 100 -Q 0 -S 0 -Y 0.0",  # Inserts + Updates
-    f"{load_gen_path} -I 100 -U 0 -Q 50 -S 0 -Y 0.0",   # Inserts + Point Queries
-    f"{load_gen_path} -I 100 -U 0 -Q 0 -S 50 -Y 0.1",   # Inserts + Range Queries
-    f"{load_gen_path} -I 100 -U 0 -Q 50 -S 50 -Y 0.1",  # Inserts + Point & Range Queries
-    f"{load_gen_path} -I 100 -U 50 -Q 25 -S 25 -Y 0.1"  # Inserts + Updates + Point & Range Queries
+    # f"{load_gen_path} -I 100000 -U 0 -Q 0 -S 0 -Y 0.0",      
+    # f"{load_gen_path} -I 100000 -U 1000 -Q 0 -S 0 -Y 0.0",  
+    # f"{load_gen_path} -I 100000 -U 500 -Q 250 -S 0 -Y 0.0", 
+    # f"{load_gen_path} -I 100000 -U 0 -Q 500 -S 0 -Y 0.0",   
+    # f"{load_gen_path} -I 100000 -U 500 -Q 450 -S 0 -Y 0.0", 
+    # f"{load_gen_path} -I 100000 -U 1000 -Q 900 -S 0 -Y 0.0", 
+    # f"{load_gen_path} -I 100000 -U 5000 -Q 500 -S 0 -Y 0.0", 
+    # f"{load_gen_path} -I 100000 -U 1000 -Q 750 -S 0 -Y 0.0", 
+    # f"{load_gen_path} -I 100000 -U 500 -Q 995 -S 0 -Y 0.0",  
+    # f"{load_gen_path} -I 100000 -U 0 -Q 1000 -S 0 -Y 0.0",   
+    
+    #range query
+    f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.001", 
+    # f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 100 -Y 0.2",  
+    # f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 150 -Y 0.3",   
 ]
+
 
 
 result_dir = os.path.join(project_dir, 'result')
@@ -88,7 +98,7 @@ for workload_command in workload_commands:
         delete_db_folder(db_folder_path)
 
         # Run working_version with the different buffer implementation (--memtable_factory option)
-        working_command = [working_version_path, f"--memtable_factory={impl_num}"]
+        working_command = [working_version_path, f"--memtable_factory={impl_num}", "-d1"]
         log_file_name = f"{workload_name}.log"
         with open(log_file_name, 'w') as log_file:
             try:
