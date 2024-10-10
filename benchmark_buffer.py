@@ -31,7 +31,7 @@ buffer_implementations = {
 
 workload_commands = [
     # f"{load_gen_path} -I 100000 -U 0 -Q 0 -S 0 -Y 0.0",      
-    # f"{load_gen_path} -I 100000 -U 1000 -Q 0 -S 0 -Y 0.0",  
+    # f"{load_gen_path} -I 100000 -U 1000 -Q 0 -S 10 -Y 0.01",  
     # f"{load_gen_path} -I 100000 -U 500 -Q 250 -S 0 -Y 0.0", 
     # f"{load_gen_path} -I 100000 -U 0 -Q 500 -S 0 -Y 0.0",   
     # f"{load_gen_path} -I 100000 -U 500 -Q 450 -S 0 -Y 0.0", 
@@ -93,11 +93,11 @@ for workload_command in workload_commands:
 
         os.chdir(workload_result_dir)
 
-        # Delete the 'db' folder before running working_version
+        # delete db before running working_version
         db_folder_path = os.path.join(workload_result_dir, 'db')
         delete_db_folder(db_folder_path)
 
-        # Run working_version with the different buffer implementation (--memtable_factory option)
+        # run working_version with the different buffer implementation (--memtable_factory option)
         working_command = [working_version_path, f"--memtable_factory={impl_num}", "-d1"]
         log_file_name = f"{workload_name}.log"
         with open(log_file_name, 'w') as log_file:
@@ -109,12 +109,11 @@ for workload_command in workload_commands:
                 logger.error(f"Exception occurred while running working_version: {e}")
                 continue  
 
-        # after running everything, the 'db' folder should be in workload_result_dir
-        # Now delete the 'db' folder to save memory
+        # after running everything, db should be in workload_result_dir
         delete_db_folder(db_folder_path)
 
         os.chdir(project_dir)
 
     os.remove(workload_file)
 
-logger.info("Script execution completed.")
+logger.info(" execution completed.")
