@@ -404,6 +404,7 @@ void runWorkload(DBEnv* env) {
         std::cerr << "ERROR: Case match NOT found !!" << std::endl;
         break;
     }
+    instruction = '$';
   }
 
   fade_stats->completion_status = true;

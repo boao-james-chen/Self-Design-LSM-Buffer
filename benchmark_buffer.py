@@ -31,20 +31,15 @@ buffer_implementations = {
 
 workload_commands = [
     # f"{load_gen_path} -I 100000 -U 0 -Q 0 -S 0 -Y 0.0",      
-    # f"{load_gen_path} -I 100000 -U 1000 -Q 0 -S 10 -Y 0.01",  
-    # f"{load_gen_path} -I 100000 -U 500 -Q 250 -S 0 -Y 0.0", 
-    # f"{load_gen_path} -I 100000 -U 0 -Q 500 -S 0 -Y 0.0",   
-    # f"{load_gen_path} -I 100000 -U 500 -Q 450 -S 0 -Y 0.0", 
-    # f"{load_gen_path} -I 100000 -U 1000 -Q 900 -S 0 -Y 0.0", 
-    # f"{load_gen_path} -I 100000 -U 5000 -Q 500 -S 0 -Y 0.0", 
-    # f"{load_gen_path} -I 100000 -U 1000 -Q 750 -S 0 -Y 0.0", 
-    # f"{load_gen_path} -I 100000 -U 500 -Q 995 -S 0 -Y 0.0",  
-    # f"{load_gen_path} -I 100000 -U 0 -Q 1000 -S 0 -Y 0.0",   
+    # f"{load_gen_path} -I 100000 -U 100 -Q 0 -S 0 -Y 0.00",  
+    # f"{load_gen_path} -I 100000 -U 50 -Q 25 -S 0 -Y 0.0", 
+    # f"{load_gen_path} -I 100000 -U 0 -Q 50 -S 0 -Y 0.0",   
+    # f"{load_gen_path} -I 100000 -U 500 -Q 450 -S 0 -Y 0.0",   
     
     #range query
     f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.001", 
-    # f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 100 -Y 0.2",  
-    # f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 150 -Y 0.3",   
+    f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.01",  
+    f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.1",   
 ]
 
 
@@ -63,6 +58,7 @@ def delete_db_folder(db_folder_path):
 
 for workload_command in workload_commands:
     # get workload name for directory and log naming
+    print(workload_command)
     workload_args = workload_command.replace(f"{load_gen_path} ", "")
     workload_name = workload_args.replace(" ", "-").replace("--", "-").replace("/", "-").replace("\\", "-")
 
