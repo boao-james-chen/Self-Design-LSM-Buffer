@@ -7,7 +7,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
-# abs path to the project directory 
+# abs path to the project directory
 project_dir = os.path.abspath(os.path.dirname(__file__))
 logger.info(f"Project directory: {project_dir}")
 
@@ -17,10 +17,10 @@ working_version_path = os.path.join(project_dir, 'bin', 'working_version')
 
 buffer_implementations = {
     1: 'skiplist',
-    # 2: 'vector',
-    # 3: 'hash_skip_list',
-    # 4: 'hash_linked_list',
-    # 5: 'unsorted_vector'
+    2: 'vector',
+    3: 'hash_skip_list',
+    4: 'hash_linked_list',
+    5: 'unsorted_vector'
 }
 
 # -I: Inserts
@@ -30,19 +30,14 @@ buffer_implementations = {
 # -Y: Range Query Selectivity
 
 workload_commands = [
-    # f"{load_gen_path} -I 100000 -U 0 -Q 0 -S 0 -Y 0.0",      
-    # f"{load_gen_path} -I 100000 -U 100 -Q 0 -S 0 -Y 0.00",  
-    # f"{load_gen_path} -I 100000 -U 50 -Q 25 -S 0 -Y 0.0", 
-    # f"{load_gen_path} -I 100000 -U 0 -Q 50 -S 0 -Y 0.0",   
-    # f"{load_gen_path} -I 100000 -U 500 -Q 450 -S 0 -Y 0.0",   
-    
-    #range query
-    f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.001", 
-    f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.01",  
-    f"{load_gen_path} -I 100000 -U 10 -Q 0 -S 1 -Y 0.1",   
+    f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 0 -Y 0.0",
+    f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 10000 -U 50 -Q 1000 -S 50 -Y 0.1",
+    # f"{load_gen_path} -I 10000 -U 200 -Q 300 -S 300 -Y 0.01",
+    # f"{load_gen_path} -I 10000 -U 50 -Q 800 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 10000 -U 1000 -Q 100 -S 1000 -Y 0.2",
+    # f"{load_gen_path} -I 10000 -U 100 -Q 0 -S 300 -Y 0.3",
 ]
-
-
 
 result_dir = os.path.join(project_dir, 'result')
 os.makedirs(result_dir, exist_ok=True)
@@ -56,13 +51,26 @@ def delete_db_folder(db_folder_path):
         except Exception as e:
             logger.error(f"Failed to delete db folder at {db_folder_path}: {e}")
 
+#  remove trailing empty line 
+def remove_trailing_newline(file_path):
+    with open(file_path, 'rb+') as file:
+        file.seek(-1, os.SEEK_END)
+        last_char = file.read(1)
+
+        # Check if the last character is a newline and remove it 
+        if last_char == b'\n':
+            file.seek(-1, os.SEEK_END)
+            file.truncate()  # Removes the last newline character
+
+    logger.info(f"Checked and removed trailing newline if present in {file_path}")
+
 for workload_command in workload_commands:
     # get workload name for directory and log naming
     print(workload_command)
     workload_args = workload_command.replace(f"{load_gen_path} ", "")
     workload_name = workload_args.replace(" ", "-").replace("--", "-").replace("/", "-").replace("\\", "-")
 
-    #  using load_gen to generate workload
+    # using load_gen to generate workload
     logger.info(f"Generating workload '{workload_name}'")
     load_gen_cmd_list = workload_command.split()
     try:
@@ -70,13 +78,16 @@ for workload_command in workload_commands:
         logger.debug(f"load_gen output:\n{ret.stdout}\n{ret.stderr}")
     except Exception as e:
         logger.error(f"Something went wrong while running load_gen: {e}")
-        continue  
+        continue 
 
     # check whether workload.txt exists
     workload_file = os.path.join(project_dir, 'workload.txt')
     if not os.path.exists(workload_file):
         logger.error(f"workload.txt does not exist after generating workload '{workload_name}'")
-        continue 
+        continue
+
+    # Remove trailing newline in workload.txt if exist
+    remove_trailing_newline(workload_file)
 
     # create a nested folder in result section
     for impl_num, impl_name in buffer_implementations.items():
@@ -103,7 +114,7 @@ for workload_command in workload_commands:
                     logger.error(f"Benchmark failed for workload '{workload_name}' with buffer implementation '{impl_name}'")
             except Exception as e:
                 logger.error(f"Exception occurred while running working_version: {e}")
-                continue  
+                continue 
 
         # after running everything, db should be in workload_result_dir
         delete_db_folder(db_folder_path)
@@ -112,4 +123,4 @@ for workload_command in workload_commands:
 
     os.remove(workload_file)
 
-logger.info(" execution completed.")
+logger.info("Execution completed.")
