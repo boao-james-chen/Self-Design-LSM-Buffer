@@ -15,13 +15,17 @@ logger.info(f"Project directory: {project_dir}")
 load_gen_path = os.path.join(project_dir, 'bin', 'load_gen')
 working_version_path = os.path.join(project_dir, 'bin', 'working_version')
 
+
+
 buffer_implementations = {
-    1: 'skiplist',
-    2: 'vector',
-    3: 'hash_skip_list',
-    4: 'hash_linked_list',
-    5: 'unsorted_vector'
+  1: 'skiplist',
+  2: 'vector',
+  3: 'hash_skip_list',
+  4: 'hash_linked_list',
+  5: 'unsorted_vector',
+  6: 'linklist' 
 }
+
 
 # -I: Inserts
 # -U: Updates
@@ -31,7 +35,7 @@ buffer_implementations = {
 
 workload_commands = [
     f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 0 -Y 0.0",
-    f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
     # f"{load_gen_path} -I 10000 -U 50 -Q 1000 -S 50 -Y 0.1",
     # f"{load_gen_path} -I 10000 -U 200 -Q 300 -S 300 -Y 0.01",
     # f"{load_gen_path} -I 10000 -U 50 -Q 800 -S 0 -Y 0.0",

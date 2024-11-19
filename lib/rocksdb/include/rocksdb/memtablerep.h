@@ -447,6 +447,7 @@ MemTableRepFactory* NewHashLinkListRepFactory(
     bool if_log_bucket_dist_when_flash = true,
     uint32_t threshold_use_skiplist = 256);
 
+MemTableRepFactory* NewLinkListRepFactory();
 
 // MemTableRepFactory* NewHashLinkListRepFactory(
 //     size_t bucket_count = 50000, size_t huge_page_tlb_size = 0,

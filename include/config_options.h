@@ -5,9 +5,13 @@
 #include <rocksdb/statistics.h>
 #include <rocksdb/table.h>
 
+//linklist header
+
 #include <iostream>
 
 #include "db_env.h"
+
+
 
 using namespace rocksdb;
 
@@ -118,6 +122,10 @@ void configOptions(DBEnv *env, Options *options,
     case 5:
       options->memtable_factory.reset(new UnsortedVectorRepFactory(
           env->vector_preallocation_size_in_bytes));
+      break;
+      // add linklist buffer
+    case 6:
+      options->memtable_factory.reset(NewLinkListRepFactory());
       break;
     default:
       std::cerr << "Error[" << __FILE__ << " : " << __LINE__
