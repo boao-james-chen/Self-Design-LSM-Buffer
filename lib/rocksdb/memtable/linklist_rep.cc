@@ -123,25 +123,12 @@ LinkListRep::LinkListRep(const MemTableRep::KeyComparator& compare,
 LinkListRep::~LinkListRep() = default;
 
 KeyHandle LinkListRep::Allocate(const size_t len, char** buf) {
-#ifdef PROFILE
-  auto start_time = std::chrono::high_resolution_clock::now();
-#endif  // PROFILE
-
   size_t total_size = sizeof(Node) + len - 1;  // -1 because key_data[1]
   char* mem = allocator_->AllocateAligned(total_size);
   Node* node = reinterpret_cast<Node*>(mem);
   node->next = nullptr;
   node->prev = nullptr;
   *buf = node->MutableKey();
-
-#ifdef PROFILE
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time)
-          .count();
-  std::cout << "AllocateTime: " << duration << " ns" << std::endl;
-#endif  // PROFILE
-
   return static_cast<void*>(node);
 }
 
@@ -152,6 +139,9 @@ void LinkListRep::Insert(KeyHandle handle) {
 
   Node* node = reinterpret_cast<Node*>(handle);
 
+  // No key processing in Insert(), matching vectorrep.cc
+
+  // Lock the mutex
   MutexLock lock(&mutex_);
 
   // Insert at the tail for unsorted insertion
@@ -167,44 +157,27 @@ void LinkListRep::Insert(KeyHandle handle) {
 
 #ifdef PROFILE
   auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time)
-          .count();
-  std::cout << "InsertTime: " << duration << " ns" << std::endl;
+  std::cout << "InsertTime: "
+            << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                   end_time - start_time)
+                   .count()
+            << std::endl
+            << std::flush;
 #endif  // PROFILE
 }
 
 bool LinkListRep::Contains(const char* key) const {
-#ifdef PROFILE
-  auto start_time = std::chrono::high_resolution_clock::now();
-#endif  // PROFILE
-
+  // No timing here to match other implementations
   MutexLock lock(&mutex_);
   Node* current = head_;
   const Slice target_key = GetLengthPrefixedSlice(key);
 
   while (current != nullptr) {
     if (compare_(current->Key(), target_key) == 0) {
-#ifdef PROFILE
-      auto end_time = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                          end_time - start_time)
-                          .count();
-      std::cout << "ContainsTime (found): " << duration << " ns" << std::endl;
-#endif  // PROFILE
       return true;
     }
     current = current->next;
   }
-
-#ifdef PROFILE
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time)
-          .count();
-  std::cout << "ContainsTime (not found): " << duration << " ns" << std::endl;
-#endif  // PROFILE
-
   return false;
 }
 
@@ -231,10 +204,12 @@ void LinkListRep::Get(const LookupKey& k, void* callback_args,
 
 #ifdef PROFILE
   auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time)
-          .count();
-  std::cout << "GetTime: " << duration << " ns" << std::endl;
+  std::cout << "PointQueryTime: "
+            << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                   end_time - start_time)
+                   .count()
+            << std::endl
+            << std::flush;
 #endif  // PROFILE
 }
 

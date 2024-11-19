@@ -34,8 +34,8 @@ buffer_implementations = {
 # -Y: Range Query Selectivity
 
 workload_commands = [
-    f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 0 -Y 0.0",
-    # f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 0 -Y 0.0",
+    f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
     # f"{load_gen_path} -I 10000 -U 50 -Q 1000 -S 50 -Y 0.1",
     # f"{load_gen_path} -I 10000 -U 200 -Q 300 -S 300 -Y 0.01",
     # f"{load_gen_path} -I 10000 -U 50 -Q 800 -S 0 -Y 0.0",
