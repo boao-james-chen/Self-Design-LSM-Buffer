@@ -1,4 +1,3 @@
-// linklist_rep.cc
 // Unsorted Doubly Linked List MemTableRep implementation for RocksDB
 
 #define PROFILE
@@ -11,21 +10,36 @@
 #include <assert.h>
 #include <stddef.h>
 
-#include <atomic>
+#include <vector>
+#include <algorithm>
 
 #include "db/memtable.h"
 #include "memory/arena.h"
-#include "port/port.h"
 #include "rocksdb/memtablerep.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/slice_transform.h"
 #include "rocksdb/utilities/options_type.h"
-#include "util/mutexlock.h"
+#include "util/coding.h"  // PutLengthPrefixedSlice
 
 namespace ROCKSDB_NAMESPACE {
 
 namespace {
 
+//  each entry in the linked list
+struct Node {
+  Node* next;
+  Node* prev;
+  // Flexible array member for key data
+  char key_data[1];  
+
+  // Returns the key stored in this node
+  const char* Key() const { return key_data; }
+
+  // Returns mutable key data pointer
+  char* MutableKey() { return key_data; }
+};
+
+// Inherit from MemTableRep
 class LinkListRep : public MemTableRep {
  public:
   explicit LinkListRep(const MemTableRep::KeyComparator& compare,
@@ -50,35 +64,7 @@ class LinkListRep : public MemTableRep {
   MemTableRep::Iterator* GetDynamicPrefixIterator(
       Arena* arena = nullptr) override;
 
- private:
-  friend class Iterator;
-
-  struct Node {
-    Node* next;
-    Node* prev;
-    char key_data[1];  // Flexible array member for key data
-
-    // Returns the key stored in this node
-    const char* Key() const { return key_data; }
-
-    // Returns mutable key data pointer
-    char* MutableKey() { return key_data; }
-  };
-
-  Node* head_;
-  Node* tail_;
-
-  Allocator* const allocator_;
-  const MemTableRep::KeyComparator& compare_;
-  const SliceTransform* const transform_;
-  Logger* const logger_;
-
-  mutable port::Mutex mutex_;  // Mutex for thread safety
-
-  // Disable copying
-  LinkListRep(const LinkListRep&) = delete;
-  LinkListRep& operator=(const LinkListRep&) = delete;
-
+  // expose the Iterator class to public
   class Iterator : public MemTableRep::Iterator {
    public:
     explicit Iterator(const LinkListRep* rep, Arena* arena = nullptr);
@@ -104,9 +90,37 @@ class LinkListRep : public MemTableRep {
 
    private:
     const LinkListRep* rep_;
-    Node* current_;
-    IterKey iter_key_;
+    // Vector to hold pointers to all nodes
+    std::vector<Node*> entries_;
+    // Current index in the sorted entries vector
+    size_t current_index_;
+
+    // Comparator for sorting entries for range query 
+    struct NodeComparator {
+      const MemTableRep::KeyComparator& compare_;
+
+      explicit NodeComparator(const MemTableRep::KeyComparator& cmp)
+          : compare_(cmp) {}
+
+      bool operator()(Node* a, Node* b) const {
+        return compare_(a->Key(), b->Key()) < 0;
+      }
+    };
   };
+
+ private:
+  // Two pointers pointing to the start and end of the linked list
+  Node* head_;
+  Node* tail_;
+
+  Allocator* const allocator_;
+  const MemTableRep::KeyComparator& compare_;
+  const SliceTransform* const transform_;
+  Logger* const logger_;
+
+ 
+  LinkListRep(const LinkListRep&) = delete;
+  LinkListRep& operator=(const LinkListRep&) = delete;
 };
 
 LinkListRep::LinkListRep(const MemTableRep::KeyComparator& compare,
@@ -123,7 +137,7 @@ LinkListRep::LinkListRep(const MemTableRep::KeyComparator& compare,
 LinkListRep::~LinkListRep() = default;
 
 KeyHandle LinkListRep::Allocate(const size_t len, char** buf) {
-  size_t total_size = sizeof(Node) + len - 1;  // -1 because key_data[1]
+  size_t total_size = sizeof(Node) + len - 1;  // -1 because the flexible array memeber for the key data (key_data[1])
   char* mem = allocator_->AllocateAligned(total_size);
   Node* node = reinterpret_cast<Node*>(mem);
   node->next = nullptr;
@@ -138,11 +152,6 @@ void LinkListRep::Insert(KeyHandle handle) {
 #endif  // PROFILE
 
   Node* node = reinterpret_cast<Node*>(handle);
-
-  // No key processing in Insert(), matching vectorrep.cc
-
-  // Lock the mutex
-  MutexLock lock(&mutex_);
 
   // Insert at the tail for unsorted insertion
   if (tail_ == nullptr) {
@@ -167,16 +176,13 @@ void LinkListRep::Insert(KeyHandle handle) {
 }
 
 bool LinkListRep::Contains(const char* key) const {
-  // No timing here to match other implementations
-  MutexLock lock(&mutex_);
-  Node* current = head_;
-  const Slice target_key = GetLengthPrefixedSlice(key);
+  Node* current = tail_;  // Start from tail to find the most recent entry
 
   while (current != nullptr) {
-    if (compare_(current->Key(), target_key) == 0) {
+    if (compare_(current->Key(), key) == 0) {
       return true;
     }
-    current = current->next;
+    current = current->prev;
   }
   return false;
 }
@@ -189,17 +195,18 @@ void LinkListRep::Get(const LookupKey& k, void* callback_args,
   auto start_time = std::chrono::high_resolution_clock::now();
 #endif  // PROFILE
 
-  MutexLock lock(&mutex_);
-  Node* current = head_;
-  const Slice target_key = k.internal_key();
+  Node* current = tail_;  // Start from tail to get the most recent entry
+  const char* target_key = k.memtable_key().data();
 
   while (current != nullptr) {
     if (compare_(current->Key(), target_key) == 0) {
       if (!callback_func(callback_args, current->Key())) {
-        break;  // Stop if callback returns false
+        break;  
       }
+      // the most recent entry should be the first one we found since shallower level always contain most recent valid entry. 
+      break;
     }
-    current = current->next;
+    current = current->prev;
   }
 
 #ifdef PROFILE
@@ -229,62 +236,99 @@ MemTableRep::Iterator* LinkListRep::GetDynamicPrefixIterator(Arena* arena) {
 // Iterator implementation
 
 LinkListRep::Iterator::Iterator(const LinkListRep* rep, Arena* /* arena */)
-    : rep_(rep), current_(nullptr) {}
+    : rep_(rep), current_index_(0) {
+  // Collect all nodes into entries_
+  Node* node = rep_->head_;
+  while (node != nullptr) {
+    entries_.push_back(node);
+    node = node->next;
+  }
 
-bool LinkListRep::Iterator::Valid() const { return current_ != nullptr; }
+  // Sort the entries using the comparator
+  NodeComparator cmp(rep_->compare_);
+  std::sort(entries_.begin(), entries_.end(), cmp);
+
+  // Initialize currentindex to invalid position to start
+  current_index_ = entries_.size();  
+}
+
+bool LinkListRep::Iterator::Valid() const {
+  return current_index_ < entries_.size();
+}
 
 const char* LinkListRep::Iterator::key() const {
   assert(Valid());
-  return current_->Key();
+  return entries_[current_index_]->Key();
 }
 
 void LinkListRep::Iterator::Next() {
   assert(Valid());
-  current_ = current_->next;
+  ++current_index_;
 }
 
 void LinkListRep::Iterator::Prev() {
-  assert(Valid());
-  current_ = current_->prev;
-}
-
-void LinkListRep::Iterator::Seek(const Slice& internal_key,
-                                 const char* /* memtable_key */) {
-  MutexLock lock(&rep_->mutex_);
-  current_ = rep_->head_;
-
-  while (current_ != nullptr) {
-    if (rep_->compare_(current_->Key(), internal_key) >= 0) {
-      break;
-    }
-    current_ = current_->next;
+  if (current_index_ == 0) {
+    current_index_ = entries_.size();  // Invalid index
+  } else {
+    --current_index_;
   }
 }
 
-void LinkListRep::Iterator::SeekForPrev(const Slice& internal_key,
-                                        const char* /* memtable_key */) {
-  MutexLock lock(&rep_->mutex_);
-  current_ = rep_->tail_;
+void LinkListRep::Iterator::Seek(const Slice& target_key,
+                                 const char* memtable_key) {
+  const char* target_key_data = memtable_key;
+  std::string encoded_key;
+  if (target_key_data == nullptr) {
+    // Encode the target_key to get a length-prefixed key
+    PutLengthPrefixedSlice(&encoded_key, target_key);
+    target_key_data = encoded_key.data();
+  }
 
-  while (current_ != nullptr) {
-    if (rep_->compare_(current_->Key(), internal_key) <= 0) {
-      break;
-    }
-    current_ = current_->prev;
+  NodeComparator cmp(rep_->compare_);
+  auto it = std::lower_bound(
+      entries_.begin(), entries_.end(), target_key_data,
+      [&](Node* node, const char* key_data) {
+        return rep_->compare_(node->Key(), key_data) < 0;
+      });
+  current_index_ = it - entries_.begin();
+}
+
+void LinkListRep::Iterator::SeekForPrev(const Slice& target_key,
+                                        const char* memtable_key) {
+  const char* target_key_data = memtable_key;
+  std::string encoded_key;
+  if (target_key_data == nullptr) {
+    // encode the target key to get a length-prefixed key
+    PutLengthPrefixedSlice(&encoded_key, target_key);
+    target_key_data = encoded_key.data();
+  }
+
+  NodeComparator cmp(rep_->compare_);
+  auto it = std::upper_bound(
+      entries_.begin(), entries_.end(), target_key_data,
+      [&](const char* key_data, Node* node) {
+        return rep_->compare_(key_data, node->Key()) < 0;
+      });
+  if (it == entries_.begin()) {
+    current_index_ = entries_.size();  // Invalid index
+  } else {
+    current_index_ = (it - entries_.begin()) - 1;
   }
 }
 
 void LinkListRep::Iterator::SeekToFirst() {
-  MutexLock lock(&rep_->mutex_);
-  current_ = rep_->head_;
+  current_index_ = 0;
 }
 
 void LinkListRep::Iterator::SeekToLast() {
-  MutexLock lock(&rep_->mutex_);
-  current_ = rep_->tail_;
+  if (entries_.empty()) {
+    current_index_ = entries_.size();  // Invalid index
+  } else {
+    current_index_ = entries_.size() - 1;
+  }
 }
 
-// Factory class to create instances of LinkListRep
+// Factor LinkListRep
 class LinkListRepFactory : public MemTableRepFactory {
  public:
   explicit LinkListRepFactory() {}

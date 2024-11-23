@@ -9,11 +9,12 @@ BUFFER_SIZE_IN_PAGES = 128
 SIZE_RATIO = 4
 
 buffer_implementations = {
-   "skiplist": "Skiplist",
-   "vector": "Vector",
-   "hash_skip_list": "Hash Skip List",
-   "hash_linked_list": "Hash Linked List",
-   "unsorted_vector": "Unsorted Vector"
+#    "skiplist": "Skiplist",
+#    "vector": "Vector",
+#    "hash_skip_list": "Hash Skip List",
+#    "hash_linked_list": "Hash Linked List",
+   "unsorted_vector": "Unsorted Vector",
+   "linklist": "Linklist"
 }
 
 def extract_times(log_file):
