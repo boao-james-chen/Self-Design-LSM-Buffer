@@ -27,6 +27,7 @@ buffer_implementations = {
 }
 
 
+
 # -I: Inserts
 # -U: Updates
 # -Q: Point Queries
@@ -34,13 +35,21 @@ buffer_implementations = {
 # -Y: Range Query Selectivity
 
 workload_commands = [
+    #insert
     # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 20000 -U 0 -Q 0 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 30000 -U 0 -Q 0 -S 0 -Y 0.0",
+    # f"{load_gen_path} -I 40000 -U 0 -Q 0 -S 0 -Y 0.0",
+    #point query 
+    f"{load_gen_path} -I 10000 -U 0 -Q 500 -S 0 -Y 0.0",
     # f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
-    # f"{load_gen_path} -I 10000 -U 50 -Q 1000 -S 50 -Y 0.1",
-    f"{load_gen_path} -I 10000 -U 200 -Q 300 -S 300 -Y 0.01",
-    # f"{load_gen_path} -I 10000 -U 50 -Q 800 -S 0 -Y 0.0",
-    # f"{load_gen_path} -I 10000 -U 1000 -Q 100 -S 1000 -Y 0.2",
-    # f"{load_gen_path} -I 10000 -U 100 -Q 0 -S 300 -Y 0.3",
+    # f"{load_gen_path} -I 10000 -U 0 -Q 1500 -S 0 -Y 0.0",
+    #range query 
+    # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.1",
+    # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.2",
+    # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.3",
+    # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.4",
+
 ]
 
 result_dir = os.path.join(project_dir, 'result')
