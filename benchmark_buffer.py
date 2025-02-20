@@ -3,15 +3,11 @@ import subprocess
 import shutil
 import logging
 
-# logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
-
-# abs path to the project directory
 project_dir = os.path.abspath(os.path.dirname(__file__))
 logger.info(f"Project directory: {project_dir}")
-
-# path to executables
 load_gen_path = os.path.join(project_dir, 'bin', 'load_gen')
 working_version_path = os.path.join(project_dir, 'bin', 'working_version')
 
@@ -45,7 +41,7 @@ workload_commands = [
     # f"{load_gen_path} -I 10000 -U 0 -Q 1000 -S 0 -Y 0.0",
     # f"{load_gen_path} -I 10000 -U 0 -Q 1500 -S 0 -Y 0.0",
     #range query 
-    # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.1",
+    f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.1",
     # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.2",
     # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.3",
     # f"{load_gen_path} -I 10000 -U 0 -Q 0 -S 100 -Y 0.4",

@@ -441,13 +441,13 @@ void runWorkload(DBEnv* env) {
 
   workload_file.close();
 
-  {
-    std::vector<std::string> live_files;
-    uint64_t manifest_size;
-    db->GetLiveFiles(live_files, &manifest_size, true /*flush_memtable*/);
-    WaitForCompactions(db);
-  }
-  delete it;
+  // {
+  //   std::vector<std::string> live_files;
+  //   uint64_t manifest_size;
+  //   db->GetLiveFiles(live_files, &manifest_size, true /*flush_memtable*/);
+  //   WaitForCompactions(db);
+  // }
+  // delete it;
   if (!s.ok()) std::cerr << s.ToString() << std::endl;
   assert(s.ok());
   s = db->Close();
